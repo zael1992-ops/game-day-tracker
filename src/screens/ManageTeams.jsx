@@ -14,6 +14,7 @@ import {
   confirmGame,
   rejectGame,
 } from '../lib/dataStore.js';
+import { parseRosterPaste } from '../lib/rosterImport.js';
 
 export default function ManageTeams() {
   const [teams, setTeams] = useState([]);
@@ -30,6 +31,11 @@ export default function ManageTeams() {
   const [editingSlotId, setEditingSlotId] = useState(null);
   const [editNumber, setEditNumber] = useState('');
   const [editName, setEditName] = useState('');
+
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkPreview, setBulkPreview] = useState(null);
+  const [bulkImporting, setBulkImporting] = useState(false);
 
   useEffect(() => {
     refreshTeams();
@@ -50,6 +56,9 @@ export default function ManageTeams() {
     setEditingSlotId(null);
     setNewNumber('');
     setNewPlayerName('');
+    setShowBulkImport(false);
+    setBulkText('');
+    setBulkPreview(null);
     try {
       setSlots(await listRosterSlots(teamId));
       setPendingGames(await listPendingGamesForTeam(teamId));
@@ -142,6 +151,33 @@ export default function ManageTeams() {
     if (!window.confirm('Remove this player from the roster?')) return;
     await deleteRosterSlot(slotId);
     setSlots(slots.filter((s) => s.id !== slotId));
+  }
+
+  function handleBulkParse() {
+    const parsed = parseRosterPaste(bulkText);
+    setBulkPreview(parsed);
+  }
+
+  function removeBulkRow(index) {
+    setBulkPreview(bulkPreview.filter((_, i) => i !== index));
+  }
+
+  async function handleBulkConfirm(teamId) {
+    setBulkImporting(true);
+    const newSlots = [];
+    for (const row of bulkPreview) {
+      try {
+        const slot = await insertRosterSlot({ teamId, number: row.number, personName: row.name });
+        newSlots.push(slot);
+      } catch (err) {
+        alert(`Couldn't add #${row.number} ${row.name}: ${err.message}`);
+      }
+    }
+    setSlots([...slots, ...newSlots]);
+    setBulkImporting(false);
+    setShowBulkImport(false);
+    setBulkText('');
+    setBulkPreview(null);
   }
 
   async function handleConfirmGame(gameId) {
@@ -243,6 +279,57 @@ export default function ManageTeams() {
                 <input value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder="Name (optional)" />
               </div>
               <button onClick={() => addRosterSlot(team.id)}>Add to roster</button>
+
+              <button onClick={() => setShowBulkImport(!showBulkImport)} style={{ fontSize: 14 }}>
+                {showBulkImport ? 'Hide bulk import' : 'Bulk import roster'}
+              </button>
+
+              {showBulkImport && (
+                <div className="stack" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: 10 }}>
+                  {!bulkPreview && (
+                    <>
+                      <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
+                        Paste a copied roster list below (number then name, repeating). Works whether it's all on one line or spread across several.
+                      </p>
+                      <textarea
+                        value={bulkText}
+                        onChange={(e) => setBulkText(e.target.value)}
+                        rows={5}
+                        placeholder="104 Anayatzin Omara Barrera García&#10;103 Andrea Julieta Martínez González..."
+                        style={{ width: '100%', fontFamily: 'inherit', fontSize: 14, borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', padding: 8 }}
+                      />
+                      <button onClick={handleBulkParse} disabled={!bulkText.trim()}>Preview</button>
+                    </>
+                  )}
+
+                  {bulkPreview && (
+                    <>
+                      <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
+                        Found {bulkPreview.length} player{bulkPreview.length === 1 ? '' : 's'}. Remove any that look wrong, then confirm.
+                      </p>
+                      {bulkPreview.length === 0 && (
+                        <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>Nothing recognizable in that text, try pasting again.</p>
+                      )}
+                      {bulkPreview.map((row, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                          <span style={{ flex: 1 }}>#{row.number} {row.name}</span>
+                          <button onClick={() => removeBulkRow(i)} aria-label="Remove" style={{ padding: '2px 8px' }}>&times;</button>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => handleBulkConfirm(team.id)}
+                          disabled={bulkPreview.length === 0 || bulkImporting}
+                          style={{ flex: 1 }}
+                        >
+                          {bulkImporting ? 'Adding...' : `Add ${bulkPreview.length} player${bulkPreview.length === 1 ? '' : 's'}`}
+                        </button>
+                        <button onClick={() => setBulkPreview(null)} style={{ flex: 1 }}>Back</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
 
               {pendingGames.length > 0 && (
                 <div className="stack" style={{ padding: 0 }}>
