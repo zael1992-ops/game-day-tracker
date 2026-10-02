@@ -1,0 +1,9 @@
+{
+  "name": "Game Tracker",
+  "short_name": "GameTracker",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f4f4f2",
+  "theme_color": "#1D9E75",
+  "icons": []
+}
