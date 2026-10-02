@@ -165,6 +165,27 @@ export async function listPendingGamesForTeam(teamId) {
   return data.map(fromGameRow);
 }
 
+export async function listActiveGames() {
+  const { data, error } = await supabase.from('games').select('*').eq('status', 'active').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data.map(fromGameRow);
+}
+
+export async function listMyPendingGames() {
+  const { data, error } = await supabase
+    .from('games')
+    .select('*')
+    .eq('status', 'pending_confirmation')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data.map(fromGameRow);
+}
+
+export async function abandonGame(gameId) {
+  const { error } = await supabase.from('games').update({ status: 'abandoned' }).eq('id', gameId);
+  if (error) throw error;
+}
+
 export async function listConfirmedGames() {
   const { data, error } = await supabase.from('games').select('*').eq('status', 'confirmed').order('created_at', { ascending: false });
   if (error) throw error;

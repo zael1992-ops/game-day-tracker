@@ -1,7 +1,9 @@
 {
+  "id": "/",
   "name": "Game Tracker",
   "short_name": "GameDay",
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f2f2f2",
   "theme_color": "#3b445b",

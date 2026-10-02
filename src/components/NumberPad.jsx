@@ -4,7 +4,7 @@ export default function NumberPad({ title, onSubmit, onCancel }) {
   const [value, setValue] = useState('');
 
   function press(digit) {
-    if (value.length < 2) setValue(value + digit);
+    if (value.length < 3) setValue(value + digit);
   }
 
   return (

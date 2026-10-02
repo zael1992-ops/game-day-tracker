@@ -10,6 +10,8 @@ import NewGame from './screens/NewGame.jsx';
 import LiveHub from './screens/LiveHub.jsx';
 import Summary from './screens/Summary.jsx';
 import Stats from './screens/Stats.jsx';
+import ActiveGames from './screens/ActiveGames.jsx';
+import PendingReviews from './screens/PendingReviews.jsx';
 import GuestGame from './screens/GuestGame.jsx';
 import './styles/tokens.css';
 
@@ -32,6 +34,8 @@ export default function App() {
           <Route path="/game/:gameId/live" element={<ProtectedRoute><LiveHub /></ProtectedRoute>} />
           <Route path="/game/:gameId/summary" element={<ProtectedRoute><Summary /></ProtectedRoute>} />
           <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
+          <Route path="/games/active" element={<ProtectedRoute><ActiveGames /></ProtectedRoute>} />
+          <Route path="/games/pending" element={<ProtectedRoute><PendingReviews /></ProtectedRoute>} />
         </Routes>
       </HashRouter>
     </AuthProvider>
