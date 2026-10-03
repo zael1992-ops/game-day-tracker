@@ -1,7 +1,16 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext.jsx';
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Wait for Supabase to finish checking for a saved session, so the
+  // Welcome buttons don't flash on screen before the redirect.
+  if (loading) return <div className="hero-screen" />;
+
+  // Already logged in: skip Welcome and go straight to Home.
+  if (user) return <Navigate to="/home" replace />;
 
   return (
     <div className="hero-screen" style={{ justifyContent: 'center' }}>
