@@ -23,6 +23,7 @@ function fromGameRow(r) {
     scoreA: r.score_a,
     scoreB: r.score_b,
     status: r.status,
+    shareToken: r.share_token,
     createdAt: r.created_at,
   };
 }
@@ -143,6 +144,42 @@ export async function insertGame({ teamAId, teamBId, teamAName, teamBName }) {
 export async function updateGameStatus(gameId, status, scoreA, scoreB) {
   const { error } = await supabase.from('games').update({ status, score_a: scoreA, score_b: scoreB }).eq('id', gameId);
   if (error) throw error;
+}
+
+// Only used for games with an unregistered "Team 1"/"Team 2" side. Registered
+// teams keep their name from Manage Teams.
+export async function updateGameTeamName(gameId, side, name) {
+  const column = side === 'A' ? 'team_a_name' : 'team_b_name';
+  const { error } = await supabase.from('games').update({ [column]: name }).eq('id', gameId);
+  if (error) throw error;
+}
+
+// --- Live sharing ------------------------------------------------------
+// A share token is a long random string. Anyone holding the link can watch
+// the game through get_shared_game() (supabase/live_sharing.sql); setting
+// it back to null turns the link off.
+function makeShareToken() {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function enableGameSharing(gameId) {
+  const token = makeShareToken();
+  const { error } = await supabase.from('games').update({ share_token: token }).eq('id', gameId);
+  if (error) throw error;
+  return token;
+}
+
+export async function disableGameSharing(gameId) {
+  const { error } = await supabase.from('games').update({ share_token: null }).eq('id', gameId);
+  if (error) throw error;
+}
+
+export async function getSharedGame(token) {
+  const { data, error } = await supabase.rpc('get_shared_game', { p_token: token });
+  if (error) throw error;
+  return data; // null when the link is off, wrong, or the game was abandoned/rejected
 }
 
 export async function confirmGame(gameId) {

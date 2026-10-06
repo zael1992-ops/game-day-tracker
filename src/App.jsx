@@ -13,6 +13,7 @@ import Stats from './screens/Stats.jsx';
 import ActiveGames from './screens/ActiveGames.jsx';
 import PendingReviews from './screens/PendingReviews.jsx';
 import GuestGame from './screens/GuestGame.jsx';
+import Watch from './screens/Watch.jsx';
 import './styles/tokens.css';
 
 // HashRouter is used so this can be hosted as a plain static build (no
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<LogIn />} />
           <Route path="/guest/new" element={<GuestGame />} />
+          <Route path="/watch/:token" element={<Watch />} />
 
           <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/teams" element={<ProtectedRoute><ManageTeams /></ProtectedRoute>} />

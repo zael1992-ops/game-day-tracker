@@ -1,6 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGame, listTeams, listPlays, insertPlay, undoPlay as undoPlayRemote, updateGameStatus } from '../lib/dataStore.js';
+import {
+  getGame,
+  listTeams,
+  listPlays,
+  insertPlay,
+  undoPlay as undoPlayRemote,
+  updateGameStatus,
+  updateGameTeamName,
+  enableGameSharing,
+  disableGameSharing,
+} from '../lib/dataStore.js';
 import NumberPad from '../components/NumberPad.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import PlayByPlay from '../components/PlayByPlay.jsx';
@@ -23,6 +33,9 @@ export default function LiveHub() {
   const [numberPadFor, setNumberPadFor] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  // 'A' | 'B' while the rename dialog is open for an unregistered team
+  const [renamingSide, setRenamingSide] = useState(null);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -112,6 +125,22 @@ export default function LiveHub() {
     navigate(`/game/${gameId}/summary`);
   }
 
+  async function saveTeamName(side, newName) {
+    await updateGameTeamName(gameId, side, newName);
+    setGame((prev) => ({ ...prev, [side === 'A' ? 'teamAName' : 'teamBName']: newName }));
+    setRenamingSide(null);
+  }
+
+  async function startSharing() {
+    const token = await enableGameSharing(gameId);
+    setGame((prev) => ({ ...prev, shareToken: token }));
+  }
+
+  async function stopSharing() {
+    await disableGameSharing(gameId);
+    setGame((prev) => ({ ...prev, shareToken: null }));
+  }
+
   function exitGame() {
     setShowExitConfirm(false);
     navigate('/home');
@@ -124,13 +153,16 @@ export default function LiveHub() {
 
   return (
     <div className="stack">
-      <button onClick={() => setShowExitConfirm(true)} style={{ alignSelf: 'flex-start' }}>Exit</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <button onClick={() => setShowExitConfirm(true)}>Exit</button>
+        <button onClick={() => setShowShare(true)}>{game.shareToken ? 'Sharing live' : 'Share live'}</button>
+      </div>
 
       <div style={{ textAlign: 'center', padding: '8px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
-          <TeamLabel name={nameA} color="var(--color-team-a)" logo={teamA?.logo} />
+          <TeamLabel name={nameA} color="var(--color-team-a)" logo={teamA?.logo} onEdit={teamA ? null : () => setRenamingSide('A')} />
           <span style={{ fontSize: 40, fontWeight: 700, lineHeight: 1, minWidth: 100, textAlign: 'center' }}>{scoreA} - {scoreB}</span>
-          <TeamLabel name={nameB} color="var(--color-team-b)" logo={teamB?.logo} />
+          <TeamLabel name={nameB} color="var(--color-team-b)" logo={teamB?.logo} onEdit={teamB ? null : () => setRenamingSide('B')} />
         </div>
       </div>
 
@@ -190,6 +222,23 @@ export default function LiveHub() {
         />
       )}
 
+      {renamingSide && (
+        <RenameTeamDialog
+          initialName={renamingSide === 'A' ? nameA : nameB}
+          onSave={(newName) => saveTeamName(renamingSide, newName)}
+          onCancel={() => setRenamingSide(null)}
+        />
+      )}
+
+      {showShare && (
+        <ShareDialog
+          shareToken={game.shareToken}
+          onStart={startSharing}
+          onStop={stopSharing}
+          onClose={() => setShowShare(false)}
+        />
+      )}
+
       {showExitConfirm && (
         <ConfirmDialog
           message="Exit this game? Everything so far is saved, but the MVP doesn't yet support resuming a game after you leave this screen."
@@ -201,7 +250,7 @@ export default function LiveHub() {
   );
 }
 
-function TeamLabel({ name, color, logo }) {
+function TeamLabel({ name, color, logo, onEdit }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 100 }}>
       {logo ? (
@@ -222,6 +271,11 @@ function TeamLabel({ name, color, logo }) {
       >
         {name}
       </strong>
+      {onEdit && (
+        <button onClick={onEdit} style={{ padding: '2px 10px', fontSize: 12 }} aria-label={`Rename ${name}`}>
+          Edit
+        </button>
+      )}
     </div>
   );
 }
@@ -260,3 +314,130 @@ function TdChooser({ pick6Number, onRun, onPass, onPick6, onCancel }) {
     </div>
   );
 }
+
+const MAX_TEAM_NAME = 30;
+
+function RenameTeamDialog({ initialName, onSave, onCancel }) {
+  const [value, setValue] = useState(initialName);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const trimmed = value.trim();
+
+  async function handleSave() {
+    if (!trimmed) {
+      setError('Team name can\'t be empty.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(trimmed);
+    } catch {
+      setError('Couldn\'t save the name. Check your connection and try again.');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={overlayStyle}>
+      <div className="stack" style={modalStyle}>
+        <h3 style={{ margin: 0 }}>Rename team</h3>
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)' }}>
+          Only changes the name for this game.
+        </p>
+        <input
+          autoFocus
+          value={value}
+          maxLength={MAX_TEAM_NAME}
+          onChange={(e) => { setValue(e.target.value); setError(''); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
+          style={{ padding: '10px 12px', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', fontSize: 16 }}
+        />
+        {error && <p style={{ margin: 0, color: 'var(--color-danger)', fontSize: 14 }}>{error}</p>}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onCancel} style={{ flex: 1 }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 1 }}>{saving ? 'Saving...' : 'Save'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShareDialog({ shareToken, onStart, onStop, onClose }) {
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+
+  // HashRouter: the watch page lives after the #, on the same domain.
+  const link = shareToken ? `${window.location.origin}${window.location.pathname}#/watch/${shareToken}` : '';
+
+  async function run(action) {
+    setBusy(true);
+    setError('');
+    try {
+      await action();
+    } catch {
+      setError('Something went wrong. Check your connection and try again.');
+    }
+    setBusy(false);
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Couldn\'t copy automatically. Press and hold the link to copy it.');
+    }
+  }
+
+  return (
+    <div style={overlayStyle}>
+      <div className="stack" style={modalStyle}>
+        <h3 style={{ margin: 0 }}>Share live game</h3>
+        {shareToken ? (
+          <>
+            <p style={{ margin: 0, fontSize: 14 }}>
+              Anyone with this link can watch the score and play by play. No account needed.
+            </p>
+            <div style={{ wordBreak: 'break-all', fontSize: 13, padding: 10, border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', userSelect: 'all' }}>
+              {link}
+            </div>
+            <button onClick={copyLink}>{copied ? 'Copied' : 'Copy link'}</button>
+            <button onClick={() => run(onStop)} disabled={busy} style={{ color: 'var(--color-danger)' }}>
+              Stop sharing
+            </button>
+          </>
+        ) : (
+          <>
+            <p style={{ margin: 0, fontSize: 14 }}>
+              Create a link anyone can open to follow this game live. They'll see team names, the score, and plays by jersey number,
+              but not player names or photos. You can turn it off any time.
+            </p>
+            <button onClick={() => run(onStart)} disabled={busy}>{busy ? 'Creating...' : 'Create link'}</button>
+          </>
+        )}
+        {error && <p style={{ margin: 0, color: 'var(--color-danger)', fontSize: 14 }}>{error}</p>}
+        <button onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+const overlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0,0,0,0.4)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 16,
+  zIndex: 10,
+};
+
+const modalStyle = {
+  background: 'var(--color-surface)',
+  borderRadius: 'var(--radius)',
+  width: '100%',
+  maxWidth: 340,
+};

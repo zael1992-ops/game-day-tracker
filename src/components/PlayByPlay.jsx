@@ -21,7 +21,7 @@ export default function PlayByPlay({ plays, onUndo, readOnly = false }) {
   );
 }
 
-function describePlay(p) {
+export function describePlay(p) {
   switch (p.type) {
     case 'TD':
       if (p.subType === 'pass') return `Pass TD: #${p.secondaryNumber} to #${p.primaryNumber} (6 pts)`;
