@@ -1,21 +1,21 @@
-// A white button, 16px corner radius, with a thick colored edge on
-// just the left side (border-left overrides the shorthand border's
-// left side since it's declared after it) and a thin neutral border
-// on the other three sides for definition.
+// Scoring button: white, 16px corners, 2px stroke all the way around in
+// the team's color, bold centered label.
 export default function TrackerButton({ children, accent, onClick, style }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{
         width: '100%',
         boxSizing: 'border-box',
         borderRadius: 16,
-        border: '1px solid var(--color-border)',
-        borderLeft: `8px solid ${accent}`,
+        border: `2px solid ${accent}`,
         background: '#fff',
         color: 'var(--color-text)',
         fontWeight: 700,
-        padding: '10px 16px',
+        fontSize: 16,
+        padding: '14px 12px',
+        textAlign: 'center',
         ...style,
       }}
     >

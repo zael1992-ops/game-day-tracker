@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getSharedGame } from '../lib/dataStore.js';
-import { describePlay } from '../components/PlayByPlay.jsx';
+import PlayByPlay from '../components/PlayByPlay.jsx';
+import GameHeader from '../components/GameHeader.jsx';
+import ScoreBox from '../components/ScoreBox.jsx';
 
 // Public, read-only spectator view. No login: everything comes through the
 // get_shared_game() function (supabase/live_sharing.sql), which only answers
@@ -54,10 +56,12 @@ export default function Watch() {
     };
   }, [state, isLive, load]);
 
-  if (state === 'loading') return <div className="stack">Loading game...</div>;
+  if (state === 'loading') return <><GameHeader /><div className="stack">Loading game...</div></>;
 
   if (state === 'unavailable' || state === 'error') {
     return (
+      <>
+      <GameHeader />
       <div className="stack" style={{ textAlign: 'center', paddingTop: 48 }}>
         <h2 style={{ margin: 0 }}>{state === 'error' ? 'Couldn\'t load this game' : 'This game isn\'t being shared'}</h2>
         <p style={{ color: 'var(--color-text-muted)' }}>
@@ -67,14 +71,16 @@ export default function Watch() {
         </p>
         {state === 'error' && <button onClick={load}>Try again</button>}
       </div>
+      </>
     );
   }
 
   const scoreA = game.plays.filter((p) => p.side === 'A').reduce((s, p) => s + p.points, 0);
   const scoreB = game.plays.filter((p) => p.side === 'B').reduce((s, p) => s + p.points, 0);
-  const newestFirst = [...game.plays].sort((a, b) => b.sequence - a.sequence);
 
   return (
+    <>
+    <GameHeader />
     <div className="stack">
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <span
@@ -92,13 +98,14 @@ export default function Watch() {
         </span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, padding: '8px 0' }}>
-        <Side name={game.teamAName} logo={game.teamALogo} color="var(--color-team-a)" />
-        <span style={{ fontSize: 44, fontWeight: 700, lineHeight: 1, minWidth: 110, textAlign: 'center' }}>
-          {scoreA} - {scoreB}
-        </span>
-        <Side name={game.teamBName} logo={game.teamBLogo} color="var(--color-team-b)" />
-      </div>
+      <ScoreBox
+        nameA={game.teamAName}
+        nameB={game.teamBName}
+        scoreA={scoreA}
+        scoreB={scoreB}
+        logoA={game.teamALogo}
+        logoB={game.teamBLogo}
+      />
 
       {isLive && lastUpdated && (
         <p style={{ margin: 0, textAlign: 'center', fontSize: 12, color: 'var(--color-text-muted)' }}>
@@ -107,52 +114,8 @@ export default function Watch() {
       )}
 
       <h3 style={{ marginBottom: 0 }}>Play by play</h3>
-      {newestFirst.length === 0 ? (
-        <p style={{ color: 'var(--color-text-muted)' }}>No plays yet.</p>
-      ) : (
-        <div className="stack" style={{ padding: 0 }}>
-          {newestFirst.map((p) => (
-            <div key={p.id} style={rowStyle}>
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 3,
-                  flexShrink: 0,
-                  background: p.side === 'A' ? 'var(--color-team-a)' : 'var(--color-team-b)',
-                }}
-              />
-              <span style={{ fontWeight: 600, flexShrink: 0 }}>{p.side === 'A' ? game.teamAName : game.teamBName}</span>
-              <span>{describePlay(p)}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      <PlayByPlay plays={game.plays} readOnly />
     </div>
+    </>
   );
 }
-
-function Side({ name, logo, color }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 100 }}>
-      {logo ? (
-        <img src={logo} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
-      ) : (
-        <span style={{ width: 24, height: 24, borderRadius: 4, background: color, display: 'inline-block' }} />
-      )}
-      <strong style={{ fontSize: 13, textAlign: 'center', lineHeight: 1.2, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {name}
-      </strong>
-    </div>
-  );
-}
-
-const rowStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius)',
-  padding: '8px 12px',
-  fontSize: 14,
-};

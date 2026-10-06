@@ -4,6 +4,7 @@ import {
   getGame,
   listTeams,
   listPlays,
+  listRosterSlots,
   insertPlay,
   undoPlay as undoPlayRemote,
   updateGameStatus,
@@ -15,6 +16,8 @@ import NumberPad from '../components/NumberPad.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import PlayByPlay from '../components/PlayByPlay.jsx';
 import TrackerButton from '../components/TrackerButton.jsx';
+import GameHeader, { HeaderAction } from '../components/GameHeader.jsx';
+import ScoreBox from '../components/ScoreBox.jsx';
 
 export default function LiveHub() {
   const { gameId } = useParams();
@@ -24,6 +27,8 @@ export default function LiveHub() {
   const [teamA, setTeamA] = useState(null);
   const [teamB, setTeamB] = useState(null);
   const [plays, setPlays] = useState([]);
+  const [namesA, setNamesA] = useState({});
+  const [namesB, setNamesB] = useState({});
   const [loading, setLoading] = useState(true);
   // { side, number } - set right after logging an interception, cleared
   // by any other play. Drives the conditional Pick-6 button.
@@ -42,9 +47,16 @@ export default function LiveHub() {
       const [foundGame, foundPlays, teams] = await Promise.all([getGame(gameId), listPlays(gameId), listTeams()]);
       setGame(foundGame);
       setPlays(foundPlays);
-      setTeamA(teams.find((t) => t.id === foundGame.teamAId) || null);
-      setTeamB(teams.find((t) => t.id === foundGame.teamBId) || null);
+      const foundTeamA = teams.find((t) => t.id === foundGame.teamAId) || null;
+      const foundTeamB = teams.find((t) => t.id === foundGame.teamBId) || null;
+      setTeamA(foundTeamA);
+      setTeamB(foundTeamB);
       setLoading(false);
+
+      // Player names for the play by play cards (registered teams only).
+      const toNames = (slots) => Object.fromEntries(slots.filter((s) => s.personName).map((s) => [s.number, s.personName]));
+      if (foundTeamA) listRosterSlots(foundTeamA.id).then((slots) => setNamesA(toNames(slots))).catch(() => {});
+      if (foundTeamB) listRosterSlots(foundTeamB.id).then((slots) => setNamesB(toNames(slots))).catch(() => {});
     })();
   }, [gameId]);
 
@@ -152,20 +164,16 @@ export default function LiveHub() {
     numberPadFor?.stage === 'thrower' ? 'Who threw the TD?' : numberPadFor?.stage === 'catcher' ? 'Who caught it?' : 'Enter player #';
 
   return (
+    <>
+      <GameHeader
+        left={<HeaderAction onClick={() => setShowExitConfirm(true)}>Exit</HeaderAction>}
+        right={
+          <HeaderAction onClick={() => setShowShare(true)} active={Boolean(game.shareToken)}>
+            {game.shareToken ? 'Sharing live' : 'Share live'}
+          </HeaderAction>
+        }
+      />
     <div className="stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={() => setShowExitConfirm(true)}>Exit</button>
-        <button onClick={() => setShowShare(true)}>{game.shareToken ? 'Sharing live' : 'Share live'}</button>
-      </div>
-
-      <div style={{ textAlign: 'center', padding: '8px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
-          <TeamLabel name={nameA} color="var(--color-team-a)" logo={teamA?.logo} onEdit={teamA ? null : () => setRenamingSide('A')} />
-          <span style={{ fontSize: 40, fontWeight: 700, lineHeight: 1, minWidth: 100, textAlign: 'center' }}>{scoreA} - {scoreB}</span>
-          <TeamLabel name={nameB} color="var(--color-team-b)" logo={teamB?.logo} onEdit={teamB ? null : () => setRenamingSide('B')} />
-        </div>
-      </div>
-
       <TeamPanel
         name={nameA}
         color="var(--color-team-a)"
@@ -175,6 +183,17 @@ export default function LiveHub() {
         onSafety={() => openNumberPad('A', 'SAFETY')}
         onInt={() => openNumberPad('A', 'INTERCEPTION')}
         onSack={() => openNumberPad('A', 'SACK')}
+      />
+
+      <ScoreBox
+        nameA={nameA}
+        nameB={nameB}
+        scoreA={scoreA}
+        scoreB={scoreB}
+        logoA={teamA?.logo}
+        logoB={teamB?.logo}
+        onEditA={teamA ? null : () => setRenamingSide('A')}
+        onEditB={teamB ? null : () => setRenamingSide('B')}
       />
 
       <TeamPanel
@@ -193,7 +212,7 @@ export default function LiveHub() {
       </button>
 
       <h3 style={{ marginBottom: 0 }}>Play by play</h3>
-      <PlayByPlay plays={plays} onUndo={handleUndo} />
+      <PlayByPlay plays={plays} onUndo={handleUndo} namesA={namesA} namesB={namesB} />
 
       {tdChoiceSide && (
         <TdChooser
@@ -247,42 +266,13 @@ export default function LiveHub() {
         />
       )}
     </div>
-  );
-}
-
-function TeamLabel({ name, color, logo, onEdit }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 100 }}>
-      {logo ? (
-        <img src={logo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover' }} />
-      ) : (
-        <span style={{ width: 20, height: 20, borderRadius: 4, background: color, display: 'inline-block' }} />
-      )}
-      <strong
-        style={{
-          fontSize: 13,
-          textAlign: 'center',
-          lineHeight: 1.2,
-          width: '100%',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {name}
-      </strong>
-      {onEdit && (
-        <button onClick={onEdit} style={{ padding: '2px 10px', fontSize: 12 }} aria-label={`Rename ${name}`}>
-          Edit
-        </button>
-      )}
-    </div>
+    </>
   );
 }
 
 function TeamPanel({ name, color, onTd, onPat1, onPat2, onSafety, onInt, onSack }) {
   return (
-    <div className="stack" style={{ padding: 0 }}>
+    <div className="stack" style={{ padding: 0, width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ width: 20, height: 20, borderRadius: 4, background: color, display: 'inline-block' }} />
         <strong>{name}</strong>

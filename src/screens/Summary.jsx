@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getGame, listPlays, listTeams, listRosterSlots } from '../lib/dataStore.js';
-import { tallyGame, describeTeamRow } from '../lib/statsHelpers.js';
+import { tallyGame } from '../lib/statsHelpers.js';
 import PlayByPlay from '../components/PlayByPlay.jsx';
+import StatSheet from '../components/StatSheet.jsx';
 
 export default function Summary() {
   const { gameId } = useParams();
@@ -61,29 +62,13 @@ export default function Summary() {
       )}
 
       <h3 style={{ marginBottom: 0 }}>Stat sheet</h3>
-      <TeamStatSheet name={nameA} rows={tallyA} names={namesA} accent="var(--color-team-a)" />
-      <TeamStatSheet name={nameB} rows={tallyB} names={namesB} accent="var(--color-team-b)" />
+      <StatSheet nameA={nameA} nameB={nameB} rowsA={tallyA} rowsB={tallyB} namesA={namesA} namesB={namesB} />
 
       <h3 style={{ marginBottom: 0 }}>Full play registry</h3>
-      <PlayByPlay plays={plays} readOnly />
+      <PlayByPlay plays={plays} readOnly namesA={namesA} namesB={namesB} />
 
       <Link to="/stats"><button style={{ width: '100%' }}>View statistics</button></Link>
       <Link to="/home"><button style={{ width: '100%' }}>Back to home</button></Link>
-    </div>
-  );
-}
-
-function TeamStatSheet({ name, rows, names, accent }) {
-  return (
-    <div className="stack" style={{ padding: 0 }}>
-      <strong>{name}</strong>
-      {rows.length === 0 && <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>No stats logged.</p>}
-      {rows.map((r) => (
-        <div key={r.number} className="stat-row" style={{ '--stat-accent': accent }}>
-          <span className="stat-row-name">#{r.number}{names[r.number] ? ` ${names[r.number]}` : ''}</span>
-          <span className="stat-row-detail">{describeTeamRow(r)}</span>
-        </div>
-      ))}
     </div>
   );
 }

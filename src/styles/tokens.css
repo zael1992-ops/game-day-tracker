@@ -217,3 +217,293 @@ select {
   font-size: 14px;
   color: var(--color-text-muted);
 }
+
+/* ---- Game header ---------------------------------------------------- */
+.game-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.game-header-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 8px var(--space-md);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.game-header-side {
+  display: flex;
+  align-items: center;
+}
+
+.game-header-side-right {
+  justify-content: flex-end;
+}
+
+.game-header-logo {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
+.header-action {
+  border: none;
+  background: none;
+  padding: 8px 0;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-action:active,
+.header-action:hover {
+  color: var(--color-mint);
+}
+
+.header-action.is-on::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-mint);
+}
+
+/* ---- Score box ------------------------------------------------------ */
+.score-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 10px;
+  background: #fff;
+  padding: 12px 10px;
+  margin: 4px 0;
+}
+
+.score-box-team,
+.score-box-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+button.score-box-team {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.score-box-team:active .score-box-name {
+  color: var(--color-mint);
+}
+
+.score-box-top {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-box-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.score-box-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.score-box-name {
+  font-size: 15px;
+  line-height: 1.2;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-box-number {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  min-width: 1.2ch;
+}
+
+.score-box-label {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.score-box-dash {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ---- Play by play cards -------------------------------------------- */
+.play-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.play-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.play-card-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.play-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.play-card-title {
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.play-card-line {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.play-card-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  padding: 12px 8px 0 0;
+}
+
+.play-card-big {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.play-card-unit {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.play-card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+/* ---- Two-column stat sheet ---------------------------------------- */
+.stat-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.stat-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stat-column-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.stat-column-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.stat-column-name {
+  display: block;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-column-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.stat-columns .stat-row {
+  padding: 8px 10px 8px 16px;
+}
+
+.stat-columns .stat-row-name {
+  font-size: 14px;
+}
+
+.stat-columns .stat-row-detail {
+  font-size: 13px;
+}

@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { tallyGame, describeTeamRow } from '../lib/statsHelpers.js';
+import { tallyGame } from '../lib/statsHelpers.js';
 import NumberPad from '../components/NumberPad.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import PlayByPlay from '../components/PlayByPlay.jsx';
 import TrackerButton from '../components/TrackerButton.jsx';
+import GameHeader, { HeaderAction } from '../components/GameHeader.jsx';
+import ScoreBox from '../components/ScoreBox.jsx';
+import StatSheet from '../components/StatSheet.jsx';
 
 // Entirely self-contained: no Supabase, no localStorage, not even
 // sessionStorage. Everything lives in this component's state, and the
@@ -120,8 +123,7 @@ export default function GuestGame() {
         </p>
 
         <h3 style={{ marginBottom: 0 }}>Stat sheet</h3>
-        <TeamStatSheet name="Team 1" rows={tallyA} accent="var(--color-team-a)" />
-        <TeamStatSheet name="Team 2" rows={tallyB} accent="var(--color-team-b)" />
+        <StatSheet nameA="Team 1" nameB="Team 2" rowsA={tallyA} rowsB={tallyB} />
 
         <button className="pill-button mint" onClick={finishAndLeave}>
           Done
@@ -134,17 +136,9 @@ export default function GuestGame() {
     numberPadFor?.stage === 'thrower' ? 'Who threw the TD?' : numberPadFor?.stage === 'catcher' ? 'Who caught it?' : 'Enter player #';
 
   return (
+    <>
+      <GameHeader left={<HeaderAction onClick={() => setShowExitConfirm(true)}>Exit</HeaderAction>} />
     <div className="stack">
-      <button onClick={() => setShowExitConfirm(true)} style={{ alignSelf: 'flex-start' }}>Exit</button>
-
-      <div style={{ textAlign: 'center', padding: '8px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
-          <TeamLabel name="Team 1" color="var(--color-team-a)" />
-          <span style={{ fontSize: 40, fontWeight: 700, lineHeight: 1, minWidth: 100, textAlign: 'center' }}>{scoreA} - {scoreB}</span>
-          <TeamLabel name="Team 2" color="var(--color-team-b)" />
-        </div>
-      </div>
-
       <TeamPanel
         name="Team 1"
         color="var(--color-team-a)"
@@ -155,6 +149,8 @@ export default function GuestGame() {
         onInt={() => openNumberPad('A', 'INTERCEPTION')}
         onSack={() => openNumberPad('A', 'SACK')}
       />
+
+      <ScoreBox nameA="Team 1" nameB="Team 2" scoreA={scoreA} scoreB={scoreB} />
 
       <TeamPanel
         name="Team 2"
@@ -209,48 +205,13 @@ export default function GuestGame() {
         />
       )}
     </div>
-  );
-}
-
-function TeamStatSheet({ name, rows, accent }) {
-  return (
-    <div className="stack" style={{ padding: 0 }}>
-      <strong>{name}</strong>
-      {rows.length === 0 && <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>No stats logged.</p>}
-      {rows.map((r) => (
-        <div key={r.number} className="stat-row" style={{ '--stat-accent': accent }}>
-          <span className="stat-row-name">#{r.number}</span>
-          <span className="stat-row-detail">{describeTeamRow(r)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TeamLabel({ name, color }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 100 }}>
-      <span style={{ width: 20, height: 20, borderRadius: 4, background: color, display: 'inline-block' }} />
-      <strong
-        style={{
-          fontSize: 13,
-          textAlign: 'center',
-          lineHeight: 1.2,
-          width: '100%',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {name}
-      </strong>
-    </div>
+    </>
   );
 }
 
 function TeamPanel({ name, color, onTd, onPat1, onPat2, onSafety, onInt, onSack }) {
   return (
-    <div className="stack" style={{ padding: 0 }}>
+    <div className="stack" style={{ padding: 0, width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ width: 20, height: 20, borderRadius: 4, background: color, display: 'inline-block' }} />
         <strong>{name}</strong>

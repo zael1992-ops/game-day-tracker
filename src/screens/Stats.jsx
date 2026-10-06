@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listConfirmedGames, listTeams, listRosterSlots, listPlaysForGames } from '../lib/dataStore.js';
 import { buildTeamTotals } from '../lib/statsHelpers.js';
+import GameCard from '../components/GameCard.jsx';
 
 export default function Stats() {
   const [tab, setTab] = useState('games'); // 'games' | 'team'
@@ -46,46 +47,20 @@ function GamesRegistry({ games, teams }) {
       {games.map((g) => {
         const teamA = teams.find((t) => t.id === g.teamAId);
         const teamB = teams.find((t) => t.id === g.teamBId);
-        return <GameCard key={g.id} game={g} teamA={teamA} teamB={teamB} />;
+        return (
+          <GameCard
+            key={g.id}
+            to={`/game/${g.id}/summary`}
+            nameA={teamA?.name || g.teamAName || 'Team 1'}
+            nameB={teamB?.name || g.teamBName || 'Team 2'}
+            logoA={teamA?.logo}
+            logoB={teamB?.logo}
+            scoreA={g.scoreA}
+            scoreB={g.scoreB}
+            caption={new Date(g.createdAt).toLocaleDateString()}
+          />
+        );
       })}
-    </div>
-  );
-}
-
-function GameCard({ game, teamA, teamB }) {
-  const nameA = teamA?.name || game.teamAName || 'Team 1';
-  const nameB = teamB?.name || game.teamBName || 'Team 2';
-
-  return (
-    <Link to={`/game/${game.id}/summary`} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>
-      <div style={{ border: '1px solid var(--color-text)', borderRadius: 'var(--radius)', padding: '16px 12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <GameCardTeam name={nameA} logo={teamA?.logo} score={game.scoreA} color="var(--color-team-a)" />
-          <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-text-muted)' }}>VS</span>
-          <GameCardTeam name={nameB} logo={teamB?.logo} score={game.scoreB} color="var(--color-team-b)" />
-        </div>
-        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--color-text-muted)', marginTop: 12 }}>
-          {new Date(game.createdAt).toLocaleDateString()}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function GameCardTeam({ name, logo, score, color }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 110 }}>
-      {logo ? (
-        <img src={logo} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
-      ) : (
-        <span style={{ width: 40, height: 40, borderRadius: 8, background: color, display: 'inline-block' }} />
-      )}
-      <strong
-        style={{ fontSize: 13, textAlign: 'center', lineHeight: 1.2, width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-      >
-        {name}
-      </strong>
-      <span style={{ fontSize: 22, fontWeight: 700 }}>{score}</span>
     </div>
   );
 }
