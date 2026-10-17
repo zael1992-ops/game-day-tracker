@@ -1,5 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
+import InstallButton from '../components/InstallButton.jsx';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function Welcome() {
         <button className="pill-button charcoal" onClick={() => navigate('/guest/new')}>
           Try a new game
         </button>
+        <InstallButton />
       </div>
 
       <p className="hero-subtitle" style={{ marginTop: 24, maxWidth: 280 }}>

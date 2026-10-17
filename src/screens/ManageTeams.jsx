@@ -5,6 +5,7 @@ import {
   insertTeam,
   updateTeamLogo,
   deleteTeam,
+  updateTeamName,
   listRosterSlots,
   insertRosterSlot,
   updateRosterSlot,
@@ -21,6 +22,9 @@ export default function ManageTeams() {
   const [loading, setLoading] = useState(true);
   const [newTeamName, setNewTeamName] = useState('');
   const [teamNameError, setTeamNameError] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState('');
+  const [renameSaved, setRenameSaved] = useState(false);
 
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [slots, setSlots] = useState([]);
@@ -53,6 +57,9 @@ export default function ManageTeams() {
       return;
     }
     setSelectedTeamId(teamId);
+    setRenameValue(teams.find((t) => t.id === teamId)?.name || '');
+    setRenameError('');
+    setRenameSaved(false);
     setEditingSlotId(null);
     setNewNumber('');
     setNewPlayerName('');
@@ -79,6 +86,32 @@ export default function ManageTeams() {
     setTeams([...teams, team]);
     setNewTeamName('');
     setTeamNameError('');
+  }
+
+  // Renaming updates the team everywhere: past games, stats, and the
+  // live hub all read the name from the team itself.
+  async function handleRenameTeam(teamId) {
+    const trimmed = renameValue.trim();
+    const current = teams.find((t) => t.id === teamId);
+    if (!trimmed) {
+      setRenameError('Team name can\'t be empty.');
+      return;
+    }
+    if (trimmed === current?.name) return;
+    const duplicate = teams.some((t) => t.id !== teamId && t.name.toLowerCase() === trimmed.toLowerCase());
+    if (duplicate) {
+      setRenameError(`A team named "${trimmed}" already exists`);
+      return;
+    }
+    try {
+      await updateTeamName(teamId, trimmed);
+      setTeams(teams.map((t) => (t.id === teamId ? { ...t, name: trimmed } : t)));
+      setRenameValue(trimmed);
+      setRenameError('');
+      setRenameSaved(true);
+    } catch (err) {
+      setRenameError(`Couldn't rename the team: ${err.message}`);
+    }
   }
 
   function handleLogoUpload(teamId, file) {
@@ -227,6 +260,24 @@ export default function ManageTeams() {
 
           {selectedTeamId === team.id && (
             <div className="stack" style={{ padding: '12px 0 0' }}>
+              <div className="stack" style={{ padding: 0, gap: 4 }}>
+                <label style={{ fontSize: 14 }} htmlFor={`team-name-${team.id}`}>Team name</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    id={`team-name-${team.id}`}
+                    value={renameValue}
+                    maxLength={40}
+                    onChange={(e) => { setRenameValue(e.target.value); setRenameError(''); setRenameSaved(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleRenameTeam(team.id); }}
+                    style={{ flex: 1 }}
+                  />
+                  <button onClick={() => handleRenameTeam(team.id)} disabled={renameValue.trim() === team.name}>
+                    {renameSaved ? 'Saved' : 'Rename'}
+                  </button>
+                </div>
+                {renameError && <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{renameError}</p>}
+              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {team.logo && <img src={team.logo} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />}
                 <label style={{ fontSize: 14 }}>

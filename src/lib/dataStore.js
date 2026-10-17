@@ -66,6 +66,11 @@ export async function insertTeam(name) {
   return fromTeamRow(data);
 }
 
+export async function updateTeamName(teamId, name) {
+  const { error } = await supabase.from('teams').update({ name }).eq('id', teamId);
+  if (error) throw error;
+}
+
 export async function updateTeamLogo(teamId, logo) {
   const { error } = await supabase.from('teams').update({ logo }).eq('id', teamId);
   if (error) throw error;

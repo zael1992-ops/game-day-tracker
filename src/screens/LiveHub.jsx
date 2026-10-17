@@ -260,7 +260,7 @@ export default function LiveHub() {
 
       {showExitConfirm && (
         <ConfirmDialog
-          message="Exit this game? Everything so far is saved, but the MVP doesn't yet support resuming a game after you leave this screen."
+          message="Exit this game? Everything is saved, and you can resume it from Home."
           onConfirm={exitGame}
           onCancel={() => setShowExitConfirm(false)}
         />

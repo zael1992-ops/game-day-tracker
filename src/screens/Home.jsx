@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
 import { listActiveGames, listMyPendingGames } from '../lib/dataStore.js';
+import InstallButton from '../components/InstallButton.jsx';
 
 export default function Home() {
   const { user, logOut } = useAuth();
@@ -52,6 +53,7 @@ export default function Home() {
         <Link to="/game/new" className="pill-button mint">Start new game</Link>
         <Link to="/teams" className="pill-button navy">Manage teams</Link>
         <Link to="/stats" className="pill-button charcoal">Statistics</Link>
+        <InstallButton />
         <button onClick={handleLogOut} className="pill-button" style={{ opacity: 0.85 }}>Log out</button>
       </div>
     </div>

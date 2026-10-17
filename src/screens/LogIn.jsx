@@ -47,6 +47,7 @@ export default function LogIn() {
           onChange={(e) => setPassword(e.target.value)}
         />
         {error && <p style={{ color: '#ffb4b4', fontSize: 14, margin: 0 }}>{error}</p>}
+        <Link to="/forgot-password" style={{ color: '#fff', fontSize: 14, alignSelf: 'flex-end' }}>Forgot password?</Link>
         <button type="submit" className="pill-button mint" disabled={submitting}>
           {submitting ? 'Logging in...' : 'Log in'}
         </button>
