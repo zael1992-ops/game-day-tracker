@@ -65,7 +65,7 @@ export function buildTeamTotals(games, plays, teamId) {
 // every zero category.
 export function describeTeamRow(row) {
   const parts = [];
-  if (row.points) parts.push(`${row.points} pts`);
+  if (row.points) parts.push(`${row.points} ${row.points === 1 ? 'pt' : 'pts'}`);
   if (row.td) parts.push(`${row.td} TD${row.td === 1 ? '' : 's'}`);
   if (row.passTD) parts.push(`${row.passTD} pass TD${row.passTD === 1 ? '' : 's'}`);
   if (row.ints) parts.push(`${row.ints} INT${row.ints === 1 ? '' : 's'}`);

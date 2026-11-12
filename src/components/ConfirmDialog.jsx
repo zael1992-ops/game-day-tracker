@@ -1,36 +1,16 @@
-export default function ConfirmDialog({ message, onConfirm, onCancel }) {
+import Dialog from './Dialog.jsx';
+
+// Yes/no pop-up. `danger` turns the confirm button red, for actions that
+// lose something (ending or abandoning a game).
+export default function ConfirmDialog({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = true, onConfirm, onCancel }) {
   return (
-    <div style={overlayStyle}>
-      <div style={modalStyle} className="stack">
-        <p style={{ margin: 0 }}>{message}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onCancel} style={{ flex: 1 }}>Cancel</button>
-          <button
-            onClick={onConfirm}
-            style={{ flex: 1, background: 'var(--color-danger)', color: '#fff', borderColor: 'var(--color-danger)' }}
-          >
-            Confirm
-          </button>
-        </div>
+    <Dialog title={title} body={message}>
+      <div className="dialog-actions">
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>{cancelLabel}</button>
+        <button type="button" className={`btn ${danger ? 'btn-danger-solid' : 'btn-primary'}`} onClick={onConfirm}>
+          {confirmLabel}
+        </button>
       </div>
-    </div>
+    </Dialog>
   );
 }
-
-const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0,0,0,0.4)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 16,
-  zIndex: 10,
-};
-
-const modalStyle = {
-  background: 'var(--color-surface)',
-  borderRadius: 'var(--radius)',
-  width: '100%',
-  maxWidth: 320,
-};

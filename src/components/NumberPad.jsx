@@ -1,53 +1,38 @@
 import { useState } from 'react';
+import Dialog from './Dialog.jsx';
 
-export default function NumberPad({ title, onSubmit, onCancel }) {
+// Jersey number entry. When the team has a roster, the matching player's
+// name shows under the number so the tracker can confirm it's the right
+// person before saving.
+export default function NumberPad({ title, names = {}, teamName, onSubmit, onCancel }) {
   const [value, setValue] = useState('');
 
   function press(digit) {
     if (value.length < 3) setValue(value + digit);
   }
 
+  const match = value && names[value];
+
   return (
-    <div style={overlayStyle}>
-      <div style={modalStyle} className="stack">
-        <h3 style={{ margin: 0 }}>{title}</h3>
-        <input value={value} readOnly placeholder="Enter player #" style={{ textAlign: 'center', fontSize: 24 }} />
-        <div style={gridStyle}>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-            <button key={n} onClick={() => press(String(n))}>{n}</button>
-          ))}
-          <button onClick={() => setValue(value.slice(0, -1))} aria-label="Backspace">&larr;</button>
-          <button onClick={() => press('0')}>0</button>
-          <button onClick={onCancel}>Cancel</button>
-        </div>
-        <button disabled={!value} onClick={() => onSubmit(value)}>
-          Confirm #{value || '_'}
-        </button>
+    <Dialog title={title}>
+      <div className="numpad-display" aria-live="polite">
+        {value ? `#${value}` : <span className="numpad-placeholder">#</span>}
       </div>
-    </div>
+      <p className="numpad-match">
+        {match ? `${match}${teamName ? `, ${teamName}` : ''}` : value ? 'Not on the roster' : 'Enter the jersey number'}
+      </p>
+      <div className="numpad-grid">
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((n) => (
+          <button key={n} type="button" className="numpad-key" onClick={() => press(n)}>{n}</button>
+        ))}
+        <button type="button" className="numpad-key numpad-key-small" onClick={() => setValue(value.slice(0, -1))}>Delete</button>
+        <button type="button" className="numpad-key" onClick={() => press('0')}>0</button>
+        <button type="button" className="numpad-key numpad-key-small" onClick={() => setValue('')}>Clear</button>
+      </div>
+      <button type="button" className="btn btn-primary" disabled={!value} onClick={() => onSubmit(value)}>
+        {value ? `Confirm #${value}` : 'Confirm'}
+      </button>
+      <button type="button" className="dialog-link" onClick={onCancel}>Cancel</button>
+    </Dialog>
   );
 }
-
-const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0,0,0,0.4)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 16,
-  zIndex: 10,
-};
-
-const modalStyle = {
-  background: 'var(--color-surface)',
-  borderRadius: 'var(--radius)',
-  width: '100%',
-  maxWidth: 320,
-};
-
-const gridStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 8,
-};

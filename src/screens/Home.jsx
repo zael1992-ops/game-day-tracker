@@ -5,7 +5,7 @@ import { listActiveGames, listMyPendingGames } from '../lib/dataStore.js';
 import InstallButton from '../components/InstallButton.jsx';
 
 export default function Home() {
-  const { user, logOut } = useAuth();
+  const { logOut } = useAuth();
   const navigate = useNavigate();
   const [activeCount, setActiveCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
@@ -20,41 +20,32 @@ export default function Home() {
     navigate('/');
   }
 
+  const plural = (n) => (n === 1 ? '' : 's');
+
   return (
-    <div className="hero-screen" style={{ justifyContent: 'center' }}>
-      <h1 className="hero-title">Game Tracker</h1>
-      <div className="hero-underline" />
-      <p className="hero-subtitle">{user?.email}</p>
+    <div className="hero-screen">
+      <h1 className="hero-title">Game Day</h1>
+      <p className="hero-tagline">Game Tracking App<br />Built just for you</p>
 
-      {(activeCount > 0 || pendingCount > 0) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 320, marginBottom: 8 }}>
-          {activeCount > 0 && (
-            <Link
-              to="/games/active"
-              className="pill-button"
-              style={{ background: 'var(--color-lime)', borderColor: 'var(--color-lime)', color: '#12332a' }}
-            >
-              {activeCount} game{activeCount === 1 ? '' : 's'} in progress, tap to resume
-            </Link>
-          )}
-          {pendingCount > 0 && (
-            <Link
-              to="/games/pending"
-              className="pill-button"
-              style={{ background: 'var(--color-rose)', borderColor: 'var(--color-rose)', color: '#fff' }}
-            >
-              {pendingCount} game{pendingCount === 1 ? '' : 's'} waiting for review
-            </Link>
-          )}
-        </div>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', alignItems: 'center' }}>
-        <Link to="/game/new" className="pill-button mint">Start new game</Link>
-        <Link to="/teams" className="pill-button navy">Manage teams</Link>
-        <Link to="/stats" className="pill-button charcoal">Statistics</Link>
+      <div className="hero-body hero-body-bottom">
+        {activeCount > 0 && (
+          <Link to="/games/active" className="pill pill-status">
+            <strong>{activeCount} game{plural(activeCount)} in progress</strong>
+            <span>Tap to resume</span>
+          </Link>
+        )}
+        {pendingCount > 0 && (
+          <Link to="/games/pending" className="pill pill-status alert">
+            <strong>{pendingCount} game{plural(pendingCount)} waiting for review</strong>
+            <span>Tap to review</span>
+          </Link>
+        )}
+        {(activeCount > 0 || pendingCount > 0) && <div style={{ height: 8 }} />}
+        <Link to="/game/new" className="pill pill-primary">Start New Game</Link>
+        <Link to="/teams" className="pill pill-tertiary">Manage Teams</Link>
+        <Link to="/stats" className="pill pill-tertiary">Statistics</Link>
         <InstallButton />
-        <button onClick={handleLogOut} className="pill-button" style={{ opacity: 0.85 }}>Log out</button>
+        <button type="button" onClick={handleLogOut} className="hero-link" style={{ marginTop: 8 }}>Log out</button>
       </div>
     </div>
   );

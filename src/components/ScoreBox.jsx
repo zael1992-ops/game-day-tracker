@@ -1,50 +1,39 @@
-// One-row scoreboard: [team] [score] - [score] [team], with team names
-// under the color squares (or logos) and Local / Visitor under the
-// scores. Never wraps, so double-digit scores stay on one line.
-//
-// onEditA / onEditB are optional: when passed, tapping that team opens
-// the rename dialog. Registered teams don't get one.
-export default function ScoreBox({ nameA, nameB, scoreA, scoreB, logoA, logoB, onEditA, onEditB }) {
+import TeamLogo from './TeamLogo.jsx';
+
+// Scoreboard. `compact` is the Live hub band between the two button
+// panels: logos and the score only, since team names are right above and
+// below it. The full version (Game summary, Watch page) adds names and
+// Local / Visitor under each logo, plus optional content underneath
+// (kickoff time, status chip).
+export default function ScoreBox({ nameA, nameB, scoreA, scoreB, logoA, logoB, compact = false, children }) {
+  if (compact) {
+    return (
+      <div className="score-band" aria-label={`${nameA} ${scoreA}, ${nameB} ${scoreB}`}>
+        <TeamLogo name={nameA} logo={logoA} side="A" size={40} />
+        <span className="score-band-score">{scoreA} - {scoreB}</span>
+        <TeamLogo name={nameB} logo={logoB} side="B" size={40} />
+      </div>
+    );
+  }
+
   return (
-    <div className="score-box">
-      <TeamBlock name={nameA} logo={logoA} color="var(--color-team-a)" onEdit={onEditA} />
-      <ScoreBlock score={scoreA} label="Local" />
-      <span className="score-box-dash" aria-hidden="true">-</span>
-      <ScoreBlock score={scoreB} label="Visitor" />
-      <TeamBlock name={nameB} logo={logoB} color="var(--color-team-b)" onEdit={onEditB} />
+    <div className="score-card">
+      <div className="score-card-row">
+        <Team name={nameA} logo={logoA} side="A" label="Local" />
+        <span className="score-card-score">{scoreA} - {scoreB}</span>
+        <Team name={nameB} logo={logoB} side="B" label="Visitor" />
+      </div>
+      {children && <div className="score-card-extra">{children}</div>}
     </div>
   );
 }
 
-function TeamBlock({ name, logo, color, onEdit }) {
-  const content = (
-    <>
-      <span className="score-box-top">
-        {logo ? (
-          <img src={logo} alt="" className="score-box-logo" />
-        ) : (
-          <span className="score-box-swatch" style={{ background: color }} />
-        )}
-      </span>
-      <strong className="score-box-name">{name}</strong>
-    </>
-  );
-
-  if (onEdit) {
-    return (
-      <button type="button" className="score-box-team is-editable" onClick={onEdit} aria-label={`Rename ${name}`}>
-        {content}
-      </button>
-    );
-  }
-  return <div className="score-box-team">{content}</div>;
-}
-
-function ScoreBlock({ score, label }) {
+function Team({ name, logo, side, label }) {
   return (
-    <div className="score-box-score">
-      <span className="score-box-top score-box-number">{score}</span>
-      <span className="score-box-label">{label}</span>
+    <div className="score-card-team">
+      <TeamLogo name={name} logo={logo} side={side} size={52} />
+      <strong className="score-card-name">{name}</strong>
+      <span className="score-card-label">{label}</span>
     </div>
   );
 }

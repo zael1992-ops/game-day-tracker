@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient.js';
+import HeroBack from '../components/HeroBack.jsx';
 
 // Password reset with a 6-digit code instead of a link. A link would have
 // to land back inside the app's #/ routes, which is fragile, and a code
@@ -68,39 +69,40 @@ export default function ForgotPassword() {
     navigate('/home');
   }
 
-  const formStyle = { width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12 };
-
   return (
-    <div className="hero-screen" style={{ justifyContent: 'flex-start' }}>
-      <Link to="/login" className="hero-link">&larr; Back</Link>
-      <h1 className="hero-title" style={{ fontSize: 32, marginTop: 24 }}>Reset password</h1>
+    <div className="hero-screen">
+      <HeroBack to="/login" />
+      <h1 className="hero-title hero-title-sm">Reset Password</h1>
       <div className="hero-underline" />
 
       {step === 'email' ? (
-        <form onSubmit={sendCode} style={formStyle}>
-          <p className="hero-subtitle" style={{ margin: 0 }}>Enter your email and we'll send you a code to reset your password.</p>
+        <form onSubmit={sendCode} className="hero-body">
+          <p className="hero-text">Enter your email and we'll send you a code to reset your password.</p>
           <input
             type="email"
             required
+            autoComplete="email"
             placeholder="Email"
-            className="pill-select"
+            aria-label="Email"
+            className="pill-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          {error && <p style={{ color: '#ffb4b4', fontSize: 14, margin: 0 }}>{error}</p>}
-          <button type="submit" className="pill-button mint" disabled={busy}>
+          {error && <p className="hero-error">{error}</p>}
+          <button type="submit" className="pill pill-primary" disabled={busy}>
             {busy ? 'Sending...' : 'Send code'}
           </button>
         </form>
       ) : (
-        <form onSubmit={resetPassword} style={formStyle}>
-          {notice && <p className="hero-subtitle" style={{ margin: 0 }}>{notice}</p>}
+        <form onSubmit={resetPassword} className="hero-body">
+          {notice && <p className="hero-text">{notice}</p>}
           <input
             inputMode="numeric"
             autoComplete="one-time-code"
             required
             placeholder="6-digit code"
-            className="pill-select"
+            aria-label="6-digit code"
+            className="pill-input"
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
           />
@@ -108,8 +110,9 @@ export default function ForgotPassword() {
             type="password"
             required
             autoComplete="new-password"
-            placeholder="New password"
-            className="pill-select"
+            placeholder="New password (6+ characters)"
+            aria-label="New password"
+            className="pill-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -118,19 +121,24 @@ export default function ForgotPassword() {
             required
             autoComplete="new-password"
             placeholder="Confirm new password"
-            className="pill-select"
+            aria-label="Confirm new password"
+            className="pill-input"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
           />
-          {error && <p style={{ color: '#ffb4b4', fontSize: 14, margin: 0 }}>{error}</p>}
-          <button type="submit" className="pill-button mint" disabled={busy}>
+          {error && <p className="hero-error">{error}</p>}
+          <button type="submit" className="pill pill-primary" disabled={busy}>
             {busy ? 'Saving...' : 'Set new password'}
           </button>
-          <button type="button" className="pill-button" onClick={sendCode} disabled={busy} style={{ opacity: 0.85 }}>
+          <button type="button" className="pill pill-secondary" onClick={sendCode} disabled={busy}>
             Send a new code
           </button>
         </form>
       )}
+
+      <p className="hero-footer">
+        {step === 'email' ? 'Remembered it?' : 'Changed your mind?'} <Link to="/login">{step === 'email' ? 'Log in' : 'Back to log in'}</Link>
+      </p>
     </div>
   );
 }

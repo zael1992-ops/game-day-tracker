@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AppScreen from '../components/AppScreen.jsx';
+import GameCard from '../components/GameCard.jsx';
+import { formatKickoff } from '../lib/kickoff.js';
 import { listMyPendingGames, listTeams, confirmGame, rejectGame } from '../lib/dataStore.js';
 
 export default function PendingReviews() {
@@ -26,31 +29,33 @@ export default function PendingReviews() {
     setGames(games.filter((g) => g.id !== gameId));
   }
 
-  if (loading) return <div className="stack">Loading...</div>;
-
   return (
-    <div className="stack">
-      <Link to="/home">&larr; Home</Link>
-      <h2>Pending reviews</h2>
-      {games.length === 0 && <p style={{ color: 'var(--color-text-muted)' }}>Nothing waiting on you.</p>}
+    <AppScreen title="Pending Review" navActive="/home">
+      {loading && <p className="empty-state">Loading...</p>}
+      {!loading && games.length === 0 && <p className="empty-state">Nothing waiting on you.</p>}
       {games.map((g) => {
-        const nameA = teams.find((t) => t.id === g.teamAId)?.name || g.teamAName || 'Team 1';
-        const nameB = teams.find((t) => t.id === g.teamBId)?.name || g.teamBName || 'Team 2';
+        const teamA = teams.find((t) => t.id === g.teamAId);
+        const teamB = teams.find((t) => t.id === g.teamBId);
         return (
-          <div key={g.id} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
-            <strong>{nameA} {g.scoreA} - {g.scoreB} {nameB}</strong>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button onClick={() => handleConfirm(g.id)} style={{ flex: 1 }}>Confirm</button>
-              <button
-                onClick={() => handleReject(g.id)}
-                style={{ flex: 1, color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
-              >
-                Reject
-              </button>
+          <GameCard
+            key={g.id}
+            nameA={teamA?.name || g.teamAName || 'Team 1'}
+            nameB={teamB?.name || g.teamBName || 'Team 2'}
+            logoA={teamA?.logo}
+            logoB={teamB?.logo}
+            scoreA={g.scoreA}
+            scoreB={g.scoreB}
+            caption={formatKickoff(g.kickoffAt)}
+          >
+            <p className="small">Final stats need your OK before they count.</p>
+            <Link to={`/game/${g.id}/summary`} className="text-button" style={{ alignSelf: 'flex-start', fontSize: 14 }}>View stat sheet</Link>
+            <div className="btn-row">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => handleConfirm(g.id)}>Confirm</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => handleReject(g.id)}>Reject</button>
             </div>
-          </div>
+          </GameCard>
         );
       })}
-    </div>
+    </AppScreen>
   );
 }

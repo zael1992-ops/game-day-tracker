@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import HeroBack from '../components/HeroBack.jsx';
 import { listTeams, insertGame } from '../lib/dataStore.js';
+import { roundToQuarterHour, toLocalInputValue } from '../lib/kickoff.js';
 
 export default function NewGame() {
   const navigate = useNavigate();
@@ -8,6 +10,9 @@ export default function NewGame() {
   const [teamAId, setTeamAId] = useState('');
   const [teamBId, setTeamBId] = useState('');
   const [starting, setStarting] = useState(false);
+  // Pre-filled with the nearest 15-minute mark; editable for late starts
+  // or games logged after the fact.
+  const [kickoff, setKickoff] = useState(() => toLocalInputValue(roundToQuarterHour()));
 
   useEffect(() => {
     listTeams().then(setTeams);
@@ -20,36 +25,44 @@ export default function NewGame() {
       teamBId: teamBId || null,
       teamAName: teamAId ? null : 'Team 1',
       teamBName: teamBId ? null : 'Team 2',
+      kickoffAt: kickoff ? new Date(kickoff).toISOString() : null,
     });
     navigate(`/game/${game.id}/live`);
   }
 
   return (
-    <div className="hero-screen" style={{ justifyContent: 'flex-start' }}>
-      <Link to="/home" className="hero-link">&larr; Home</Link>
-      <h1 className="hero-title" style={{ fontSize: 32, marginTop: 24 }}>New game</h1>
-      <div className="hero-underline" />
+    <div className="hero-screen">
+      <HeroBack to="/home" label="Home" />
+      <h1 className="hero-title">New Game</h1>
 
-      <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <label style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>Local team</label>
-        <select className="pill-select" value={teamAId} onChange={(e) => setTeamAId(e.target.value)}>
-          <option value="">Team 1 (not saved)</option>
+      <div className="hero-body">
+        <label htmlFor="team-a" className="hero-label">Local</label>
+        <select id="team-a" className="pill-select" value={teamAId} onChange={(e) => setTeamAId(e.target.value)}>
+          <option value="">Team 1</option>
           {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
 
-        <label style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 8 }}>Visiting team</label>
-        <select className="pill-select" value={teamBId} onChange={(e) => setTeamBId(e.target.value)}>
-          <option value="">Team 2 (not saved)</option>
+        <label htmlFor="team-b" className="hero-label">Visiting</label>
+        <select id="team-b" className="pill-select" value={teamBId} onChange={(e) => setTeamBId(e.target.value)}>
+          <option value="">Team 2</option>
           {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
 
-        <p className="hero-subtitle" style={{ maxWidth: 320, margin: '16px 0' }}>
-          Team names can still be edited once you're in the live game hub.
-        </p>
+        <label htmlFor="kickoff" className="hero-label">Kickoff</label>
+        <input
+          id="kickoff"
+          type="datetime-local"
+          step={900}
+          className="pill-select"
+          style={{ colorScheme: 'light' }}
+          value={kickoff}
+          onChange={(e) => setKickoff(e.target.value)}
+        />
 
-        <button className="pill-button mint" onClick={startGame} disabled={starting}>
-          {starting ? 'Starting...' : 'Start game'}
+        <button type="button" className="pill pill-primary" style={{ marginTop: 24 }} onClick={startGame} disabled={starting}>
+          {starting ? 'Starting...' : 'Start Game'}
         </button>
+        <p className="hero-note">Team names can still be edited once you're in the live game hub.</p>
       </div>
     </div>
   );

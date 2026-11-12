@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
+import HeroBack from '../components/HeroBack.jsx';
 
 export default function LogIn() {
   const { logIn } = useAuth();
@@ -24,37 +25,41 @@ export default function LogIn() {
   }
 
   return (
-    <div className="hero-screen" style={{ justifyContent: 'flex-start' }}>
-      <Link to="/" className="hero-link">&larr; Back</Link>
-      <h1 className="hero-title" style={{ fontSize: 32, marginTop: 24 }}>Log in</h1>
+    <div className="hero-screen">
+      <HeroBack to="/" />
+      <h1 className="hero-title">Log In</h1>
       <div className="hero-underline" />
 
-      <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <form onSubmit={handleSubmit} className="hero-body">
         <input
           type="email"
           required
+          autoComplete="email"
           placeholder="Email"
-          className="pill-select"
+          aria-label="Email"
+          className="pill-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           required
+          autoComplete="current-password"
           placeholder="Password"
-          className="pill-select"
+          aria-label="Password"
+          className="pill-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <p style={{ color: '#ffb4b4', fontSize: 14, margin: 0 }}>{error}</p>}
-        <Link to="/forgot-password" style={{ color: '#fff', fontSize: 14, alignSelf: 'flex-end' }}>Forgot password?</Link>
-        <button type="submit" className="pill-button mint" disabled={submitting}>
+        {error && <p className="hero-error">{error}</p>}
+        <button type="submit" className="pill pill-primary" disabled={submitting}>
           {submitting ? 'Logging in...' : 'Log in'}
         </button>
+        <Link to="/forgot-password" className="hero-link">Forgot password?</Link>
       </form>
 
-      <p className="hero-subtitle" style={{ marginTop: 16 }}>
-        No account yet? <Link to="/signup" style={{ color: '#fff' }}>Sign up</Link>
+      <p className="hero-footer">
+        New here? <Link to="/signup">Create an account</Link>
       </p>
     </div>
   );

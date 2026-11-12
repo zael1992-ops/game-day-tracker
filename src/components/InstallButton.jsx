@@ -6,7 +6,7 @@ export default function InstallButton() {
   const { canInstall, install } = useInstallPrompt();
   if (!canInstall) return null;
   return (
-    <button type="button" onClick={install} className="pill-button" style={{ background: 'var(--color-lime)', borderColor: 'var(--color-lime)', color: '#12332a' }}>
+    <button type="button" onClick={install} className="pill pill-tertiary">
       Install app
     </button>
   );

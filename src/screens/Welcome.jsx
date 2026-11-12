@@ -1,9 +1,8 @@
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
 import InstallButton from '../components/InstallButton.jsx';
 
 export default function Welcome() {
-  const navigate = useNavigate();
   const { user, loading } = useAuth();
 
   // Wait for Supabase to finish checking for a saved session, so the
@@ -14,23 +13,17 @@ export default function Welcome() {
   if (user) return <Navigate to="/home" replace />;
 
   return (
-    <div className="hero-screen" style={{ justifyContent: 'center' }}>
+    <div className="hero-screen">
       <h1 className="hero-title">Game Day</h1>
-      <div className="hero-underline" />
-      <p className="hero-subtitle">A game tracking app built specifically for flag football</p>
+      <p className="hero-tagline">Game Tracking App<br />Built just for you</p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', alignItems: 'center' }}>
-        <Link to="/signup" className="pill-button mint">Sign up</Link>
-        <Link to="/login" className="pill-button navy">Log in</Link>
-        <button className="pill-button charcoal" onClick={() => navigate('/guest/new')}>
-          Try a new game
-        </button>
+      <div className="hero-body hero-body-bottom">
+        <Link to="/signup" className="pill pill-primary">Create Account</Link>
+        <Link to="/login" className="pill pill-secondary">Sign In</Link>
+        <Link to="/guest/new" className="pill pill-tertiary">Try as Guest</Link>
+        <p className="hero-note">Trying it out doesn't need an account. Nothing about that game is saved once you're done.</p>
         <InstallButton />
       </div>
-
-      <p className="hero-subtitle" style={{ marginTop: 24, maxWidth: 280 }}>
-        Trying it out doesn't need an account, nothing about that game is saved once you're done.
-      </p>
     </div>
   );
 }

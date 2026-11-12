@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import AppScreen from '../components/AppScreen.jsx';
+import TeamLogo from '../components/TeamLogo.jsx';
+import { PencilIcon, CloseIcon } from '../components/Icons.jsx';
 import {
   listTeams,
   insertTeam,
@@ -224,207 +226,183 @@ export default function ManageTeams() {
     setPendingGames(pendingGames.filter((g) => g.id !== gameId));
   }
 
-  if (loading) return <div className="stack">Loading teams...</div>;
+  const createRow = (
+    <div>
+      <div className="inline-row">
+        <input
+          className="field"
+          aria-label="New team name"
+          value={newTeamName}
+          onChange={(e) => { setNewTeamName(e.target.value); setTeamNameError(''); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') addTeam(); }}
+          placeholder="New team name"
+        />
+        <button type="button" className="btn btn-primary" onClick={addTeam} disabled={!newTeamName.trim()}>Create</button>
+      </div>
+      {teamNameError && <p className="error-text" style={{ marginTop: 6 }}>{teamNameError}</p>}
+    </div>
+  );
 
   return (
-    <div className="stack">
-      <Link to="/home">&larr; Home</Link>
-      <h2>Manage teams</h2>
-
-      <div className="stack" style={{ padding: 0 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            value={newTeamName}
-            onChange={(e) => { setNewTeamName(e.target.value); setTeamNameError(''); }}
-            placeholder="New team name"
-          />
-          <button onClick={addTeam}>Create</button>
-        </div>
-        {teamNameError && <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{teamNameError}</p>}
-      </div>
+    <AppScreen title="Manage Teams">
+      {loading && <p className="empty-state">Loading teams...</p>}
+      {!loading && teams.length === 0 && <p className="empty-state">No teams yet. Create your first one below.</p>}
 
       {teams.map((team) => (
-        <div key={team.id} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => selectTeam(team.id)}
-              style={{ flex: 1, textAlign: 'left', border: 'none', background: 'transparent', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
-            >
-              {team.logo && <img src={team.logo} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'cover' }} />}
-              {team.name}
-            </button>
-            <button onClick={() => handleDeleteTeam(team.id, team.name)} aria-label={`Delete ${team.name}`} style={{ padding: '4px 10px' }}>
-              &times;
-            </button>
-          </div>
+        selectedTeamId !== team.id ? (
+          <button key={team.id} type="button" className="team-row" onClick={() => selectTeam(team.id)} aria-label={`Edit ${team.name}`}>
+            <span className="team-row-name">{team.name}</span>
+            <span className="icon-button icon-button-dark"><PencilIcon /></span>
+          </button>
+        ) : (
+          <section key={team.id} className="team-card" aria-label={team.name}>
+            <div className="team-card-head">
+              <span className="team-row-name">{team.name}</span>
+              <button type="button" className="icon-button icon-button-dark" onClick={() => selectTeam(team.id)} aria-label="Close">
+                <CloseIcon />
+              </button>
+            </div>
 
-          {selectedTeamId === team.id && (
-            <div className="stack" style={{ padding: '12px 0 0' }}>
-              <div className="stack" style={{ padding: 0, gap: 4 }}>
-                <label style={{ fontSize: 14 }} htmlFor={`team-name-${team.id}`}>Team name</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    id={`team-name-${team.id}`}
-                    value={renameValue}
-                    maxLength={40}
-                    onChange={(e) => { setRenameValue(e.target.value); setRenameError(''); setRenameSaved(false); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleRenameTeam(team.id); }}
-                    style={{ flex: 1 }}
-                  />
-                  <button onClick={() => handleRenameTeam(team.id)} disabled={renameValue.trim() === team.name}>
-                    {renameSaved ? 'Saved' : 'Rename'}
-                  </button>
-                </div>
-                {renameError && <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{renameError}</p>}
+            <div className="team-card-body">
+              <label className="field-label" htmlFor={`team-name-${team.id}`}>Team name</label>
+              <div className="inline-row">
+                <input
+                  id={`team-name-${team.id}`}
+                  className="field"
+                  value={renameValue}
+                  maxLength={40}
+                  onChange={(e) => { setRenameValue(e.target.value); setRenameError(''); setRenameSaved(false); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleRenameTeam(team.id); }}
+                />
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRenameTeam(team.id)} disabled={renameValue.trim() === team.name}>
+                  {renameSaved ? 'Saved' : 'Rename'}
+                </button>
               </div>
+              {renameError && <p className="error-text">{renameError}</p>}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {team.logo && <img src={team.logo} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />}
-                <label style={{ fontSize: 14 }}>
-                  Team logo
+              <p className="field-label">Logo</p>
+              <div className="logo-row">
+                <TeamLogo name={team.name} logo={team.logo} size={48} />
+                <label className="file-label">
+                  {team.logo ? 'Change logo' : 'Add logo'}
                   <input type="file" accept="image/*" onChange={(e) => handleLogoUpload(team.id, e.target.files[0])} />
                 </label>
               </div>
 
-              <h4 style={{ margin: 0 }}>Roster</h4>
+              <div className="roster-head">
+                <h3 className="section-title" style={{ margin: 0 }}>Roster</h3>
+                <span className="muted small">{slots.length} player{slots.length === 1 ? '' : 's'}</span>
+              </div>
+
               {slots.map((s) => (
-                <div key={s.id} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: 8 }}>
-                  {editingSlotId === s.id ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input value={editNumber} onChange={(e) => setEditNumber(e.target.value)} placeholder="Jersey #" />
-                        <input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          placeholder="Name"
-                          disabled={!s.personId}
-                          title={!s.personId ? 'Add a name by creating a new roster entry, this one has no linked player yet' : undefined}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => saveEditSlot(s)} style={{ flex: 1 }}>Save</button>
-                        <button onClick={() => setEditingSlotId(null)} style={{ flex: 1 }}>Cancel</button>
-                      </div>
+                editingSlotId === s.id ? (
+                  <div key={s.id} className="roster-edit">
+                    <div className="inline-row">
+                      <input className="field field-sm num-field" aria-label="Jersey number" value={editNumber} onChange={(e) => setEditNumber(e.target.value)} placeholder="#" />
+                      <input
+                        className="field field-sm"
+                        aria-label="Name"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Name"
+                        disabled={!s.personId}
+                        title={!s.personId ? 'Add a name by creating a new roster entry, this one has no linked player yet' : undefined}
+                      />
                     </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Avatar photo={s.personPhoto} number={s.number} />
-                      <div style={{ flex: 1 }}>
-                        <div>#{s.number} {s.personName || <span style={{ color: 'var(--color-text-muted)' }}>(no name on file yet)</span>}</div>
-                        {s.personId && (
-                          <label style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                            Photo
-                            <input type="file" accept="image/*" onChange={(e) => handlePhotoUpload(s, e.target.files[0])} style={{ fontSize: 12 }} />
-                          </label>
-                        )}
-                      </div>
-                      <button onClick={() => startEditSlot(s)} style={{ padding: '4px 10px' }}>Edit</button>
-                      <button onClick={() => removeSlot(s.id)} aria-label="Remove player" style={{ padding: '4px 10px' }}>&times;</button>
+                    {s.personId && (
+                      <label className="file-label small">
+                        {s.personPhoto ? 'Change photo' : 'Add photo'}
+                        <input type="file" accept="image/*" onChange={(e) => handlePhotoUpload(s, e.target.files[0])} />
+                      </label>
+                    )}
+                    <div className="btn-row">
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => saveEditSlot(s)}>Save</button>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingSlotId(null)}>Cancel</button>
                     </div>
-                  )}
-                </div>
+                    <button type="button" className="text-button text-button-danger" style={{ alignSelf: 'flex-start' }} onClick={() => removeSlot(s.id)}>
+                      Remove player
+                    </button>
+                  </div>
+                ) : (
+                  <div key={s.id} className="roster-row">
+                    {s.personPhoto && <img src={s.personPhoto} alt="" className="roster-photo" />}
+                    <span className="roster-num">#{s.number}</span>
+                    <span className="roster-name">{s.personName || <span className="muted">No name yet</span>}</span>
+                    <button type="button" className="icon-button icon-button-dark" onClick={() => startEditSlot(s)} aria-label={`Edit #${s.number}`}>
+                      <PencilIcon />
+                    </button>
+                  </div>
+                )
               ))}
 
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="Jersey #" />
-                <input value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder="Name (optional)" />
+              <p className="field-label" style={{ marginTop: 4 }}>Add a player</p>
+              <div className="inline-row">
+                <input className="field field-sm num-field" aria-label="Jersey number" inputMode="numeric" value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="#" />
+                <input className="field field-sm" aria-label="Player name" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder="Name" />
+                <button type="button" className="btn btn-primary btn-sm" style={{ minWidth: 72 }} onClick={() => addRosterSlot(team.id)} disabled={!newNumber.trim()}>Add</button>
               </div>
-              <button onClick={() => addRosterSlot(team.id)}>Add to roster</button>
 
-              <button onClick={() => setShowBulkImport(!showBulkImport)} style={{ fontSize: 14 }}>
-                {showBulkImport ? 'Hide bulk import' : 'Bulk import roster'}
-              </button>
-
-              {showBulkImport && (
-                <div className="stack" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: 10 }}>
-                  {!bulkPreview && (
-                    <>
-                      <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                        Paste a copied roster list below (number then name, repeating). Works whether it's all on one line or spread across several.
-                      </p>
-                      <textarea
-                        value={bulkText}
-                        onChange={(e) => setBulkText(e.target.value)}
-                        rows={5}
-                        placeholder="104 Anayatzin Omara Barrera García&#10;103 Andrea Julieta Martínez González..."
-                        style={{ width: '100%', fontFamily: 'inherit', fontSize: 14, borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', padding: 8 }}
-                      />
-                      <button onClick={handleBulkParse} disabled={!bulkText.trim()}>Preview</button>
-                    </>
-                  )}
-
-                  {bulkPreview && (
-                    <>
-                      <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
-                        Found {bulkPreview.length} player{bulkPreview.length === 1 ? '' : 's'}. Remove any that look wrong, then confirm.
-                      </p>
-                      {bulkPreview.length === 0 && (
-                        <p style={{ fontSize: 13, color: 'var(--color-danger)' }}>Nothing recognizable in that text, try pasting again.</p>
-                      )}
-                      {bulkPreview.map((row, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-                          <span style={{ flex: 1 }}>#{row.number} {row.name}</span>
-                          <button onClick={() => removeBulkRow(i)} aria-label="Remove" style={{ padding: '2px 8px' }}>&times;</button>
-                        </div>
-                      ))}
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={() => handleBulkConfirm(team.id)}
-                          disabled={bulkPreview.length === 0 || bulkImporting}
-                          style={{ flex: 1 }}
-                        >
-                          {bulkImporting ? 'Adding...' : `Add ${bulkPreview.length} player${bulkPreview.length === 1 ? '' : 's'}`}
-                        </button>
-                        <button onClick={() => setBulkPreview(null)} style={{ flex: 1 }}>Back</button>
-                      </div>
-                    </>
-                  )}
+              <p className="field-label" style={{ marginTop: 4 }}>Paste a roster</p>
+              {!bulkPreview ? (
+                <>
+                  <textarea
+                    className="field"
+                    aria-label="Paste a roster"
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    rows={4}
+                    placeholder={'Paste numbers and names, like\n12 Ana 7 Luis 21 Jordi'}
+                  />
+                  <button type="button" className="btn btn-primary btn-sm" onClick={handleBulkParse} disabled={!bulkText.trim()}>Import players</button>
+                </>
+              ) : (
+                <div className="roster-edit">
+                  <p className="small muted">
+                    Found {bulkPreview.length} player{bulkPreview.length === 1 ? '' : 's'}. Remove any that look wrong, then add them.
+                  </p>
+                  {bulkPreview.length === 0 && <p className="error-text">Nothing recognizable in that text. Try pasting again.</p>}
+                  {bulkPreview.map((row, i) => (
+                    <div key={i} className="roster-row">
+                      <span className="roster-num">#{row.number}</span>
+                      <span className="roster-name">{row.name}</span>
+                      <button type="button" className="icon-button icon-button-dark" onClick={() => removeBulkRow(i)} aria-label={`Remove #${row.number}`}>
+                        <CloseIcon size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="btn-row">
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => handleBulkConfirm(team.id)} disabled={bulkPreview.length === 0 || bulkImporting}>
+                      {bulkImporting ? 'Adding...' : `Add ${bulkPreview.length} player${bulkPreview.length === 1 ? '' : 's'}`}
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBulkPreview(null)}>Back</button>
+                  </div>
                 </div>
               )}
 
               {pendingGames.length > 0 && (
-                <div className="stack" style={{ padding: 0 }}>
-                  <h4 style={{ margin: 0 }}>Pending games to review</h4>
+                <>
+                  <h3 className="section-title">Games to Review</h3>
                   {pendingGames.map((g) => (
-                    <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                      <span>{g.teamAName || 'Team A'} vs {g.teamBName || 'Team B'}: {g.scoreA}-{g.scoreB}</span>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => handleConfirmGame(g.id)}>Confirm</button>
-                        <button onClick={() => handleRejectGame(g.id)} style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>Reject</button>
+                    <div key={g.id} className="roster-edit">
+                      <strong>{g.teamAName || 'Team A'} {g.scoreA} - {g.scoreB} {g.teamBName || 'Team B'}</strong>
+                      <div className="btn-row">
+                        <button type="button" className="btn btn-primary btn-sm" onClick={() => handleConfirmGame(g.id)}>Confirm</button>
+                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleRejectGame(g.id)}>Reject</button>
                       </div>
                     </div>
                   ))}
-                </div>
+                </>
               )}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
-function Avatar({ photo, number }) {
-  if (photo) {
-    return <img src={photo} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />;
-  }
-  return (
-    <div
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: '50%',
-        background: 'var(--color-bg)',
-        border: '1px solid var(--color-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 12,
-        fontWeight: 700,
-        color: 'var(--color-text-muted)',
-      }}
-    >
-      #{number}
-    </div>
+              <button type="button" className="text-button text-button-danger" style={{ alignSelf: 'flex-start', marginTop: 8 }} onClick={() => handleDeleteTeam(team.id, team.name)}>
+                Delete team
+              </button>
+            </div>
+          </section>
+        )
+      ))}
+
+      {!loading && createRow}
+    </AppScreen>
   );
 }

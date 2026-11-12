@@ -25,6 +25,7 @@ function fromGameRow(r) {
     status: r.status,
     shareToken: r.share_token,
     createdAt: r.created_at,
+    kickoffAt: r.kickoff_at ?? r.created_at,
   };
 }
 
@@ -125,7 +126,7 @@ export async function deleteRosterSlot(slotId) {
 
 // --- Games -----------------------------------------------------------
 export async function listGames() {
-  const { data, error } = await supabase.from('games').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('games').select('*').order('kickoff_at', { ascending: false });
   if (error) throw error;
   return data.map(fromGameRow);
 }
@@ -136,10 +137,12 @@ export async function getGame(gameId) {
   return fromGameRow(data);
 }
 
-export async function insertGame({ teamAId, teamBId, teamAName, teamBName }) {
+export async function insertGame({ teamAId, teamBId, teamAName, teamBName, kickoffAt }) {
+  const row = { team_a_id: teamAId, team_b_id: teamBId, team_a_name: teamAName, team_b_name: teamBName };
+  if (kickoffAt) row.kickoff_at = kickoffAt;
   const { data, error } = await supabase
     .from('games')
-    .insert({ team_a_id: teamAId, team_b_id: teamBId, team_a_name: teamAName, team_b_name: teamBName })
+    .insert(row)
     .select()
     .single();
   if (error) throw error;
@@ -208,7 +211,7 @@ export async function listPendingGamesForTeam(teamId) {
 }
 
 export async function listActiveGames() {
-  const { data, error } = await supabase.from('games').select('*').eq('status', 'active').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('games').select('*').eq('status', 'active').order('kickoff_at', { ascending: false });
   if (error) throw error;
   return data.map(fromGameRow);
 }
@@ -218,7 +221,7 @@ export async function listMyPendingGames() {
     .from('games')
     .select('*')
     .eq('status', 'pending_confirmation')
-    .order('created_at', { ascending: false });
+    .order('kickoff_at', { ascending: false });
   if (error) throw error;
   return data.map(fromGameRow);
 }
@@ -229,7 +232,7 @@ export async function abandonGame(gameId) {
 }
 
 export async function listConfirmedGames() {
-  const { data, error } = await supabase.from('games').select('*').eq('status', 'confirmed').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('games').select('*').eq('status', 'confirmed').order('kickoff_at', { ascending: false });
   if (error) throw error;
   return data.map(fromGameRow);
 }

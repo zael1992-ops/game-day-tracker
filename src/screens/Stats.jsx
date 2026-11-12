@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import AppScreen from '../components/AppScreen.jsx';
 import { listConfirmedGames, listTeams, listRosterSlots, listPlaysForGames } from '../lib/dataStore.js';
 import { buildTeamTotals } from '../lib/statsHelpers.js';
 import GameCard from '../components/GameCard.jsx';
+import { formatKickoff } from '../lib/kickoff.js';
 
 export default function Stats() {
   const [tab, setTab] = useState('games'); // 'games' | 'team'
@@ -19,31 +20,26 @@ export default function Stats() {
   }, []);
 
   return (
-    <div className="stack">
-      <Link to="/home">&larr; Home</Link>
-      <h2>Statistics</h2>
-
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => setTab('games')} style={tab === 'games' ? activeTabStyle : undefined}>Game stats</button>
-        <button onClick={() => setTab('team')} style={tab === 'team' ? activeTabStyle : undefined}>Team stats</button>
+    <AppScreen title="Statistics">
+      <div className="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'games'} className={`tab${tab === 'games' ? ' is-active' : ''}`} onClick={() => setTab('games')}>Game Stats</button>
+        <button type="button" role="tab" aria-selected={tab === 'team'} className={`tab${tab === 'team' ? ' is-active' : ''}`} onClick={() => setTab('team')}>Team Stats</button>
       </div>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p className="empty-state">Loading...</p>}
 
       {!loading && tab === 'games' && <GamesRegistry games={games} teams={teams} />}
       {!loading && tab === 'team' && <TeamStats teams={teams} />}
-    </div>
+    </AppScreen>
   );
 }
 
-const activeTabStyle = { background: 'var(--color-text)', color: '#fff', borderColor: 'var(--color-text)' };
-
 function GamesRegistry({ games, teams }) {
-  if (games.length === 0) return <p style={{ color: 'var(--color-text-muted)' }}>No confirmed games yet.</p>;
+  if (games.length === 0) return <p className="empty-state">No confirmed games yet.</p>;
 
   return (
-    <div className="stack" style={{ padding: 0 }}>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>Every confirmed game. Tap one to see its stat sheet.</p>
+    <>
+      <p className="muted small">Every confirmed game. Tap one to see its stat sheet.</p>
       {games.map((g) => {
         const teamA = teams.find((t) => t.id === g.teamAId);
         const teamB = teams.find((t) => t.id === g.teamBId);
@@ -57,11 +53,11 @@ function GamesRegistry({ games, teams }) {
             logoB={teamB?.logo}
             scoreA={g.scoreA}
             scoreB={g.scoreB}
-            caption={new Date(g.createdAt).toLocaleDateString()}
+            caption={formatKickoff(g.kickoffAt)}
           />
         );
       })}
-    </div>
+    </>
   );
 }
 
@@ -119,40 +115,27 @@ function TeamStats({ teams }) {
     : null;
 
   return (
-    <div className="stack" style={{ padding: 0 }}>
-      <select value={selectedTeamId} onChange={(e) => selectTeam(e.target.value)}>
+    <>
+      <select className="field" aria-label="Team" value={selectedTeamId} onChange={(e) => selectTeam(e.target.value)}>
         <option value="">Choose a team...</option>
         {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
       </select>
 
-      {loadingTeam && <p>Loading...</p>}
+      {loadingTeam && <p className="empty-state">Loading...</p>}
 
       {!loadingTeam && sortedRows && sortedRows.length === 0 && (
-        <p style={{ color: 'var(--color-text-muted)' }}>This team has no roster yet, add players under Manage teams.</p>
+        <p className="empty-state">This team has no roster yet. Add players under Manage Teams.</p>
       )}
 
       {!loadingTeam && sortedRows && sortedRows.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
+        <div className="stat-table-wrap">
+          <table className="stat-table">
             <thead>
               <tr>
-                <th style={thStyle}>#</th>
-                <th style={{ ...thStyle, textAlign: 'left' }}>Name</th>
+                <th className="col-player">Player</th>
                 {STAT_COLUMNS.map((col) => (
-                  <th key={col.key} style={thStyle}>
-                    <button
-                      onClick={() => sortBy(col.key)}
-                      style={{
-                        border: 'none',
-                        background: 'none',
-                        padding: 0,
-                        font: 'inherit',
-                        fontWeight: sortKey === col.key ? 700 : 400,
-                        color: sortKey === col.key ? 'var(--color-text)' : 'var(--color-text-muted)',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
+                  <th key={col.key} className={sortKey === col.key ? 'is-sorted' : undefined} aria-sort={sortKey === col.key ? (sortDir === 'desc' ? 'descending' : 'ascending') : undefined}>
+                    <button type="button" onClick={() => sortBy(col.key)}>
                       {col.label}{sortKey === col.key ? (sortDir === 'desc' ? ' \u2193' : ' \u2191') : ''}
                     </button>
                   </th>
@@ -161,11 +144,10 @@ function TeamStats({ teams }) {
             </thead>
             <tbody>
               {sortedRows.map((r) => (
-                <tr key={r.number} style={{ borderTop: '1px solid var(--color-border)' }}>
-                  <td style={tdStyle}>#{r.number}</td>
-                  <td style={{ ...tdStyle, textAlign: 'left' }}>{r.name || <span style={{ color: 'var(--color-text-muted)' }}>&mdash;</span>}</td>
+                <tr key={r.number}>
+                  <td className="col-player">#{r.number} {r.name || ''}</td>
                   {STAT_COLUMNS.map((col) => (
-                    <td key={col.key} style={tdStyle}>{r[col.key] || 0}</td>
+                    <td key={col.key} style={col.key === 'points' ? { fontWeight: 700 } : undefined}>{r[col.key] || 0}</td>
                   ))}
                 </tr>
               ))}
@@ -173,9 +155,6 @@ function TeamStats({ teams }) {
           </table>
         </div>
       )}
-    </div>
+    </>
   );
 }
-
-const thStyle = { padding: '6px 10px', textAlign: 'center', fontSize: 12, color: 'var(--color-text-muted)' };
-const tdStyle = { padding: '8px 10px', textAlign: 'center' };

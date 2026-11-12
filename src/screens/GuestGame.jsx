@@ -4,8 +4,9 @@ import { tallyGame } from '../lib/statsHelpers.js';
 import NumberPad from '../components/NumberPad.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import PlayByPlay from '../components/PlayByPlay.jsx';
-import TrackerButton from '../components/TrackerButton.jsx';
-import GameHeader, { HeaderAction } from '../components/GameHeader.jsx';
+import TeamPanel from '../components/TeamPanel.jsx';
+import TdChooser from '../components/TdChooser.jsx';
+import GameHeader, { BackButton } from '../components/GameHeader.jsx';
 import ScoreBox from '../components/ScoreBox.jsx';
 import StatSheet from '../components/StatSheet.jsx';
 
@@ -115,60 +116,55 @@ export default function GuestGame() {
     const tallyB = tallyGame(confirmedPlays.filter((p) => p.side === 'B')).sort((a, b) => b.points - a.points);
 
     return (
-      <div className="stack">
-        <h2>Final score</h2>
-        <p style={{ fontSize: 20 }}>Team 1 {scoreA} - {scoreB} Team 2</p>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
-          This was a guest game, nothing here is saved. Sign up if you want your games and stats to stick around.
-        </p>
+      <div className="screen-light">
+        <GameHeader />
+        <div className="guest-banner">Guest game. Nothing here is saved.</div>
+        <main className="page">
+          <h1 className="page-title">Final Score</h1>
+          <ScoreBox nameA="Team 1" nameB="Team 2" scoreA={scoreA} scoreB={scoreB}>
+            <span>Sign up if you want your games and stats to stick around.</span>
+          </ScoreBox>
 
-        <h3 style={{ marginBottom: 0 }}>Stat sheet</h3>
-        <StatSheet nameA="Team 1" nameB="Team 2" rowsA={tallyA} rowsB={tallyB} />
+          <h2 className="section-title">Stat Sheet</h2>
+          <StatSheet nameA="Team 1" nameB="Team 2" rowsA={tallyA} rowsB={tallyB} />
 
-        <button className="pill-button mint" onClick={finishAndLeave}>
-          Done
-        </button>
+          <h2 className="section-title">Play by Play</h2>
+          <PlayByPlay plays={plays} readOnly />
+
+          <button type="button" className="btn btn-primary" onClick={finishAndLeave}>Done</button>
+        </main>
       </div>
     );
   }
 
   const numberPadTitle =
-    numberPadFor?.stage === 'thrower' ? 'Who threw the TD?' : numberPadFor?.stage === 'catcher' ? 'Who caught it?' : 'Enter player #';
+    numberPadFor?.stage === 'thrower' ? 'Who Threw the TD?' : numberPadFor?.stage === 'catcher' ? 'Who Caught It?' : 'Who Made the Play?';
+
+  const panelHandlers = (side) => ({
+    onTd: () => setTdChoiceSide(side),
+    onPat1: () => openNumberPad(side, 'PAT1'),
+    onPat2: () => openNumberPad(side, 'PAT2'),
+    onSafety: () => openNumberPad(side, 'SAFETY'),
+    onInt: () => openNumberPad(side, 'INTERCEPTION'),
+    onSack: () => openNumberPad(side, 'SACK'),
+  });
 
   return (
-    <>
-      <GameHeader left={<HeaderAction onClick={() => setShowExitConfirm(true)}>Exit</HeaderAction>} />
-    <div className="stack">
-      <TeamPanel
-        name="Team 1"
-        color="var(--color-team-a)"
-        onTd={() => setTdChoiceSide('A')}
-        onPat1={() => openNumberPad('A', 'PAT1')}
-        onPat2={() => openNumberPad('A', 'PAT2')}
-        onSafety={() => openNumberPad('A', 'SAFETY')}
-        onInt={() => openNumberPad('A', 'INTERCEPTION')}
-        onSack={() => openNumberPad('A', 'SACK')}
-      />
+    <div className="screen-light">
+      <GameHeader left={<BackButton label="Exit game" onClick={() => setShowExitConfirm(true)} />} />
+      <div className="guest-banner">Guest game. Nothing here is saved.</div>
+      <main className="tracker-page">
+        <TeamPanel side="A" name="Team 1" label="Local" {...panelHandlers('A')} />
+        <ScoreBox compact nameA="Team 1" nameB="Team 2" scoreA={scoreA} scoreB={scoreB} />
+        <TeamPanel side="B" name="Team 2" label="Visitor" {...panelHandlers('B')} />
 
-      <ScoreBox nameA="Team 1" nameB="Team 2" scoreA={scoreA} scoreB={scoreB} />
+        <button type="button" className="btn btn-danger-solid" style={{ marginTop: 8 }} onClick={() => setShowEndConfirm(true)}>
+          End Game
+        </button>
 
-      <TeamPanel
-        name="Team 2"
-        color="var(--color-team-b)"
-        onTd={() => setTdChoiceSide('B')}
-        onPat1={() => openNumberPad('B', 'PAT1')}
-        onPat2={() => openNumberPad('B', 'PAT2')}
-        onSafety={() => openNumberPad('B', 'SAFETY')}
-        onInt={() => openNumberPad('B', 'INTERCEPTION')}
-        onSack={() => openNumberPad('B', 'SACK')}
-      />
-
-      <button onClick={() => setShowEndConfirm(true)} style={{ background: 'var(--color-danger)', color: '#fff', borderColor: 'var(--color-danger)' }}>
-        End game
-      </button>
-
-      <h3 style={{ marginBottom: 0 }}>Play by play</h3>
-      <PlayByPlay plays={plays} onUndo={handleUndo} />
+        <h2 className="section-title">Play by Play</h2>
+        <PlayByPlay plays={plays} onUndo={handleUndo} />
+      </main>
 
       {tdChoiceSide && (
         <TdChooser
@@ -191,7 +187,10 @@ export default function GuestGame() {
 
       {showEndConfirm && (
         <ConfirmDialog
-          message="End the game? You'll see the stat sheet next, then it's gone for good, this is a guest game."
+          title="End the Game?"
+          message="You'll see the stat sheet next, then it's gone for good. This is a guest game."
+          cancelLabel="Keep Playing"
+          confirmLabel="End Game"
           onConfirm={endGame}
           onCancel={() => setShowEndConfirm(false)}
         />
@@ -199,47 +198,14 @@ export default function GuestGame() {
 
       {showExitConfirm && (
         <ConfirmDialog
-          message="Exit this guest game? Nothing from it is saved anywhere, so leaving now loses it for good."
+          title="Exit the Game?"
+          message="Nothing from a guest game is saved, so leaving now loses it for good."
+          cancelLabel="Stay"
+          confirmLabel="Exit"
           onConfirm={exitGame}
           onCancel={() => setShowExitConfirm(false)}
         />
       )}
-    </div>
-    </>
-  );
-}
-
-function TeamPanel({ name, color, onTd, onPat1, onPat2, onSafety, onInt, onSack }) {
-  return (
-    <div className="stack" style={{ padding: 0, width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 20, height: 20, borderRadius: 4, background: color, display: 'inline-block' }} />
-        <strong>{name}</strong>
-      </div>
-      <TrackerButton accent={color} onClick={onTd}>Touchdown</TrackerButton>
-      <div style={{ display: 'flex', gap: 16 }}>
-        <TrackerButton accent={color} onClick={onPat1}>1 pts</TrackerButton>
-        <TrackerButton accent={color} onClick={onPat2}>2 pts</TrackerButton>
-        <TrackerButton accent={color} onClick={onSafety}>Safety</TrackerButton>
-      </div>
-      <div style={{ display: 'flex', gap: 16 }}>
-        <TrackerButton accent={color} onClick={onInt}>Interception</TrackerButton>
-        <TrackerButton accent={color} onClick={onSack}>Sack</TrackerButton>
-      </div>
-    </div>
-  );
-}
-
-function TdChooser({ pick6Number, onRun, onPass, onPick6, onCancel }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 10 }}>
-      <div className="stack" style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius)', maxWidth: 320, width: '100%' }}>
-        <h3 style={{ margin: 0 }}>Touchdown type</h3>
-        <button onClick={onRun}>Run TD</button>
-        <button onClick={onPass}>Pass TD</button>
-        {pick6Number && <button onClick={onPick6}>Pick-6 (returned by #{pick6Number})</button>}
-        <button onClick={onCancel}>Cancel</button>
-      </div>
     </div>
   );
 }

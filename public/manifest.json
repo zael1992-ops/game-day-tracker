@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "Game Tracker",
+  "name": "GDay",
   "short_name": "GameDay",
   "description": "Track flag football games live: scores, plays and stats.",
   "start_url": "/",
@@ -10,7 +10,7 @@
     "standalone"
   ],
   "background_color": "#f2f2f2",
-  "theme_color": "#3b445b",
+  "theme_color": "#1a1a1a",
   "icons": [
     {
       "src": "/icons/icon-192-any.png",

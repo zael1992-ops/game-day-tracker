@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import AppScreen from '../components/AppScreen.jsx';
 import { listActiveGames, listTeams, listPlaysForGames, abandonGame } from '../lib/dataStore.js';
 import GameCard from '../components/GameCard.jsx';
+import { formatKickoff } from '../lib/kickoff.js';
 
 export default function ActiveGames() {
   const navigate = useNavigate();
@@ -34,13 +36,10 @@ export default function ActiveGames() {
     setGames(games.filter((g) => g.id !== gameId));
   }
 
-  if (loading) return <div className="stack">Loading...</div>;
-
   return (
-    <div className="stack">
-      <Link to="/home">&larr; Home</Link>
-      <h2>Games in progress</h2>
-      {games.length === 0 && <p style={{ color: 'var(--color-text-muted)' }}>No games in progress.</p>}
+    <AppScreen title="Games in Progress" navActive="/home">
+      {loading && <p className="empty-state">Loading...</p>}
+      {!loading && games.length === 0 && <p className="empty-state">No games in progress.</p>}
       {games.map((g) => {
         const teamA = teams.find((t) => t.id === g.teamAId);
         const teamB = teams.find((t) => t.id === g.teamBId);
@@ -53,20 +52,15 @@ export default function ActiveGames() {
             logoB={teamB?.logo}
             scoreA={scores[g.id]?.A ?? 0}
             scoreB={scores[g.id]?.B ?? 0}
-            caption={`Started ${new Date(g.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`}
+            caption={`Kickoff ${formatKickoff(g.kickoffAt)}`}
           >
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => navigate(`/game/${g.id}/live`)} style={{ flex: 1 }}>Resume</button>
-              <button
-                onClick={() => handleAbandon(g.id)}
-                style={{ flex: 1, color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
-              >
-                Abandon
-              </button>
+            <div className="btn-row">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate(`/game/${g.id}/live`)}>Resume</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => handleAbandon(g.id)}>Abandon</button>
             </div>
           </GameCard>
         );
       })}
-    </div>
+    </AppScreen>
   );
 }

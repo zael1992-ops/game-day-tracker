@@ -56,22 +56,29 @@ export default function Watch() {
     };
   }, [state, isLive, load]);
 
-  if (state === 'loading') return <><GameHeader /><div className="stack">Loading game...</div></>;
+  if (state === 'loading') {
+    return (
+      <div className="screen-light">
+        <GameHeader />
+        <p className="empty-state">Loading game...</p>
+      </div>
+    );
+  }
 
   if (state === 'unavailable' || state === 'error') {
     return (
-      <>
-      <GameHeader />
-      <div className="stack" style={{ textAlign: 'center', paddingTop: 48 }}>
-        <h2 style={{ margin: 0 }}>{state === 'error' ? 'Couldn\'t load this game' : 'This game isn\'t being shared'}</h2>
-        <p style={{ color: 'var(--color-text-muted)' }}>
-          {state === 'error'
-            ? 'Check your connection and try again.'
-            : 'The link may have been turned off, or the game is no longer available.'}
-        </p>
-        {state === 'error' && <button onClick={load}>Try again</button>}
+      <div className="screen-light">
+        <GameHeader />
+        <main className="page" style={{ textAlign: 'center', paddingTop: 48 }}>
+          <h1 className="page-title">{state === 'error' ? 'Couldn\'t Load This Game' : 'This Game Isn\'t Being Shared'}</h1>
+          <p className="muted">
+            {state === 'error'
+              ? 'Check your connection and try again.'
+              : 'The link may have been turned off, or the game is no longer available.'}
+          </p>
+          {state === 'error' && <button type="button" className="btn btn-primary" onClick={load}>Try Again</button>}
+        </main>
       </div>
-      </>
     );
   }
 
@@ -79,43 +86,22 @@ export default function Watch() {
   const scoreB = game.plays.filter((p) => p.side === 'B').reduce((s, p) => s + p.points, 0);
 
   return (
-    <>
-    <GameHeader />
-    <div className="stack">
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: 1,
-            padding: '4px 12px',
-            borderRadius: 999,
-            background: isLive ? 'var(--color-team-b)' : 'var(--color-navy)',
-            color: '#fff',
-          }}
-        >
-          {isLive ? 'LIVE' : 'FINAL'}
-        </span>
-      </div>
+    <div className="screen-light">
+      <GameHeader />
+      <main className="page">
+        <ScoreBox nameA={game.teamAName} nameB={game.teamBName} scoreA={scoreA} scoreB={scoreB} logoA={game.teamALogo} logoB={game.teamBLogo}>
+          <span className={`chip ${isLive ? 'chip-red' : 'chip-dark'}`}>{isLive ? 'LIVE' : 'FINAL'}</span>
+        </ScoreBox>
 
-      <ScoreBox
-        nameA={game.teamAName}
-        nameB={game.teamBName}
-        scoreA={scoreA}
-        scoreB={scoreB}
-        logoA={game.teamALogo}
-        logoB={game.teamBLogo}
-      />
+        {isLive && lastUpdated && (
+          <p className="muted small" style={{ textAlign: 'center' }}>
+            Updates automatically. Last checked {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+          </p>
+        )}
 
-      {isLive && lastUpdated && (
-        <p style={{ margin: 0, textAlign: 'center', fontSize: 12, color: 'var(--color-text-muted)' }}>
-          Updates automatically. Last checked {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
-        </p>
-      )}
-
-      <h3 style={{ marginBottom: 0 }}>Play by play</h3>
-      <PlayByPlay plays={game.plays} readOnly />
+        <h2 className="section-title">Play by Play</h2>
+        <PlayByPlay plays={game.plays} readOnly teamAName={game.teamAName} teamBName={game.teamBName} />
+      </main>
     </div>
-    </>
   );
 }

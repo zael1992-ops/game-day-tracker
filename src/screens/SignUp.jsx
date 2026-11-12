@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
+import HeroBack from '../components/HeroBack.jsx';
 
 export default function SignUp() {
   const { signUp } = useAuth();
@@ -31,27 +32,32 @@ export default function SignUp() {
 
   if (checkEmail) {
     return (
-      <div className="hero-screen" style={{ justifyContent: 'center' }}>
-        <h1 className="hero-title" style={{ fontSize: 28 }}>Check your email</h1>
+      <div className="hero-screen">
+        <HeroBack to="/" />
+        <h1 className="hero-title hero-title-sm">Check Your Email</h1>
         <div className="hero-underline" />
-        <p className="hero-subtitle">We sent a confirmation link to {email}. Follow it, then come back and log in.</p>
-        <Link to="/login" className="pill-button">Go to log in</Link>
+        <div className="hero-body">
+          <p className="hero-text">We sent a confirmation link to {email}. Follow it, then come back and log in.</p>
+          <Link to="/login" className="pill pill-primary">Go to log in</Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="hero-screen" style={{ justifyContent: 'flex-start' }}>
-      <Link to="/" className="hero-link">&larr; Back</Link>
-      <h1 className="hero-title" style={{ fontSize: 32, marginTop: 24 }}>Sign up</h1>
+    <div className="hero-screen">
+      <HeroBack to="/" />
+      <h1 className="hero-title">Sign Up</h1>
       <div className="hero-underline" />
 
-      <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <form onSubmit={handleSubmit} className="hero-body">
         <input
           type="email"
           required
+          autoComplete="email"
           placeholder="Email"
-          className="pill-select"
+          aria-label="Email"
+          className="pill-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -59,19 +65,21 @@ export default function SignUp() {
           type="password"
           required
           minLength={6}
+          autoComplete="new-password"
           placeholder="Password (6+ characters)"
-          className="pill-select"
+          aria-label="Password, 6 or more characters"
+          className="pill-input"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <p style={{ color: '#ffb4b4', fontSize: 14, margin: 0 }}>{error}</p>}
-        <button type="submit" className="pill-button mint" disabled={submitting}>
+        {error && <p className="hero-error">{error}</p>}
+        <button type="submit" className="pill pill-primary" disabled={submitting}>
           {submitting ? 'Creating account...' : 'Create account'}
         </button>
       </form>
 
-      <p className="hero-subtitle" style={{ marginTop: 16 }}>
-        Already have an account? <Link to="/login" style={{ color: '#fff' }}>Log in</Link>
+      <p className="hero-footer">
+        Already have an account? <Link to="/login">Log in</Link>
       </p>
     </div>
   );

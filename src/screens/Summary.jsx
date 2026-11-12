@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import AppScreen from '../components/AppScreen.jsx';
+import ScoreBox from '../components/ScoreBox.jsx';
+import { formatKickoff } from '../lib/kickoff.js';
 import { getGame, listPlays, listTeams, listRosterSlots } from '../lib/dataStore.js';
 import { tallyGame } from '../lib/statsHelpers.js';
 import PlayByPlay from '../components/PlayByPlay.jsx';
@@ -38,7 +41,13 @@ export default function Summary() {
     })();
   }, [gameId]);
 
-  if (loading || !game) return <div className="stack">Loading summary...</div>;
+  if (loading || !game) {
+    return (
+      <AppScreen title="Final Score" navActive="/home">
+        <p className="empty-state">Loading summary...</p>
+      </AppScreen>
+    );
+  }
 
   const nameA = teamA?.name || game.teamAName || 'Team 1';
   const nameB = teamB?.name || game.teamBName || 'Team 2';
@@ -46,29 +55,40 @@ export default function Summary() {
   const tallyA = tallyGame(plays.filter((p) => p.side === 'A')).sort((a, b) => b.points - a.points);
   const tallyB = tallyGame(plays.filter((p) => p.side === 'B')).sort((a, b) => b.points - a.points);
 
+  const status = STATUS[game.status] || { label: game.status, chip: 'chip-dark' };
+
   return (
-    <div className="stack">
-      <h2>Final score</h2>
-      <p style={{ fontSize: 20 }}>
-        {nameA} {game.scoreA} - {game.scoreB} {nameB}
-      </p>
-      <p style={{ color: 'var(--color-text-muted)' }}>
-        {game.status === 'pending_confirmation'
-          ? "These stats aren't counted yet. A captain from either team needs to open Manage teams, select their team, and confirm this game under \"Pending games to review.\""
-          : `Status: ${game.status}`}
-      </p>
+    <AppScreen title="Final Score" navActive="/home">
+      <ScoreBox nameA={nameA} nameB={nameB} scoreA={game.scoreA} scoreB={game.scoreB} logoA={teamA?.logo} logoB={teamB?.logo}>
+        <span>{formatKickoff(game.kickoffAt)}</span>
+        <span className={`chip ${status.chip}`}>{status.label}</span>
+      </ScoreBox>
+
       {game.status === 'pending_confirmation' && (
-        <Link to="/teams"><button style={{ width: '100%' }}>Go review it now</button></Link>
+        <>
+          <p className="muted small" style={{ textAlign: 'center' }}>
+            These stats don't count yet. A captain from either team needs to confirm the game first.
+          </p>
+          <Link to="/games/pending" className="btn btn-secondary">Review it now</Link>
+        </>
       )}
 
-      <h3 style={{ marginBottom: 0 }}>Stat sheet</h3>
+      <h2 className="section-title">Stat Sheet</h2>
       <StatSheet nameA={nameA} nameB={nameB} rowsA={tallyA} rowsB={tallyB} namesA={namesA} namesB={namesB} />
 
-      <h3 style={{ marginBottom: 0 }}>Full play registry</h3>
-      <PlayByPlay plays={plays} readOnly namesA={namesA} namesB={namesB} />
+      <h2 className="section-title">Play by Play</h2>
+      <PlayByPlay plays={plays} readOnly namesA={namesA} namesB={namesB} teamAName={nameA} teamBName={nameB} />
 
-      <Link to="/stats"><button style={{ width: '100%' }}>View statistics</button></Link>
-      <Link to="/home"><button style={{ width: '100%' }}>Back to home</button></Link>
-    </div>
+      <Link to="/stats" className="btn btn-primary">View Statistics</Link>
+      <Link to="/home" className="btn btn-secondary">Back to Home</Link>
+    </AppScreen>
   );
 }
+
+const STATUS = {
+  pending_confirmation: { label: 'Waiting for review', chip: 'chip-amber' },
+  confirmed: { label: 'Confirmed', chip: 'chip-green' },
+  rejected: { label: 'Rejected', chip: 'chip-red' },
+  active: { label: 'In progress', chip: 'chip-dark' },
+  abandoned: { label: 'Abandoned', chip: 'chip-dark' },
+};
