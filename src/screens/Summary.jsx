@@ -8,7 +8,7 @@ import { HeaderAction } from '../components/GameHeader.jsx';
 import ShareDialog from '../components/ShareDialog.jsx';
 import { tallyGame } from '../lib/statsHelpers.js';
 import PlayByPlay from '../components/PlayByPlay.jsx';
-import StatSheet from '../components/StatSheet.jsx';
+import GameStats from '../components/GameStats.jsx';
 
 export default function Summary() {
   const { gameId } = useParams();
@@ -97,7 +97,7 @@ export default function Summary() {
       )}
 
       <h2 className="section-title">Stat Sheet</h2>
-      <StatSheet nameA={nameA} nameB={nameB} rowsA={tallyA} rowsB={tallyB} namesA={namesA} namesB={namesB} />
+      <GameStats nameA={nameA} nameB={nameB} rowsA={tallyA} rowsB={tallyB} namesA={namesA} namesB={namesB} />
 
       <h2 className="section-title">Play by Play</h2>
       <PlayByPlay plays={plays} readOnly namesA={namesA} namesB={namesB} teamAName={nameA} teamBName={nameB} />

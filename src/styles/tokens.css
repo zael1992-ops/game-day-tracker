@@ -1225,6 +1225,52 @@ select.field {
   margin: -4px 0 0;
 }
 
+/* Team switch on a game's Stats Table: two buttons in the teams' colors */
+.team-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.team-switch-btn {
+  min-height: 52px;
+  border-radius: var(--radius);
+  border: 2px solid var(--line);
+  background: #fff;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.team-switch-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-switch-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.team-switch-btn.side-a.is-active {
+  border-color: var(--team-a);
+  background: #e6f9f1;
+}
+
+.team-switch-btn.side-b.is-active {
+  border-color: var(--team-b);
+  background: #ffeced;
+}
+
 /* ===================================================================
    Manage teams
    =================================================================== */

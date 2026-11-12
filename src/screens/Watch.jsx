@@ -4,7 +4,7 @@ import { getSharedGame } from '../lib/dataStore.js';
 import PlayByPlay from '../components/PlayByPlay.jsx';
 import GameHeader from '../components/GameHeader.jsx';
 import ScoreBox from '../components/ScoreBox.jsx';
-import StatSheet from '../components/StatSheet.jsx';
+import GameStats from '../components/GameStats.jsx';
 import { tallyGame } from '../lib/statsHelpers.js';
 import { formatKickoff } from '../lib/kickoff.js';
 
@@ -103,7 +103,7 @@ export default function Watch() {
         {!isLive && (
           <>
             <h2 className="section-title">Stat Sheet</h2>
-            <StatSheet nameA={game.teamAName} nameB={game.teamBName} rowsA={tallyA} rowsB={tallyB} />
+            <GameStats nameA={game.teamAName} nameB={game.teamBName} rowsA={tallyA} rowsB={tallyB} />
           </>
         )}
 

@@ -8,7 +8,7 @@ import TeamPanel from '../components/TeamPanel.jsx';
 import TdChooser from '../components/TdChooser.jsx';
 import GameHeader, { BackButton } from '../components/GameHeader.jsx';
 import ScoreBox from '../components/ScoreBox.jsx';
-import StatSheet from '../components/StatSheet.jsx';
+import GameStats from '../components/GameStats.jsx';
 
 // Entirely self-contained: no Supabase, no localStorage, not even
 // sessionStorage. Everything lives in this component's state, and the
@@ -126,7 +126,7 @@ export default function GuestGame() {
           </ScoreBox>
 
           <h2 className="section-title">Stat Sheet</h2>
-          <StatSheet nameA="Team 1" nameB="Team 2" rowsA={tallyA} rowsB={tallyB} />
+          <GameStats nameA="Team 1" nameB="Team 2" rowsA={tallyA} rowsB={tallyB} />
 
           <h2 className="section-title">Play by Play</h2>
           <PlayByPlay plays={plays} readOnly />

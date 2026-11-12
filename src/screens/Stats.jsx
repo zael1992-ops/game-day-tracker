@@ -3,6 +3,7 @@ import AppScreen from '../components/AppScreen.jsx';
 import { listConfirmedGames, listTeams, listRosterSlots, listPlaysForGames } from '../lib/dataStore.js';
 import { buildTeamTotals } from '../lib/statsHelpers.js';
 import GameCard from '../components/GameCard.jsx';
+import StatTable from '../components/StatTable.jsx';
 import { formatKickoff } from '../lib/kickoff.js';
 
 export default function Stats() {
@@ -61,33 +62,10 @@ function GamesRegistry({ games, teams }) {
   );
 }
 
-// Short headers so all seven columns fit on a phone next to the player.
-// The legend under the table spells them out.
-const STAT_COLUMNS = [
-  { key: 'points', label: 'PTS', full: 'Points' },
-  { key: 'td', label: 'TD', full: 'Touchdowns' },
-  { key: 'passTD', label: 'PTD', full: 'Pass TDs thrown' },
-  { key: 'ints', label: 'INT', full: 'Interceptions' },
-  { key: 'sacks', label: 'SCK', full: 'Sacks' },
-  { key: 'safeties', label: 'SAF', full: 'Safeties' },
-  { key: 'conversions', label: 'CNV', full: 'Conversions' },
-];
-
-// "Emiliano Santiago Hernandez" -> "Emiliano H." so the name column stays
-// narrow. The full name is still there for screen readers.
-function shortName(name) {
-  if (!name) return '';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-}
-
 function TeamStats({ teams }) {
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [rows, setRows] = useState(null);
   const [loadingTeam, setLoadingTeam] = useState(false);
-  const [sortKey, setSortKey] = useState('points');
-  const [sortDir, setSortDir] = useState('desc');
 
   async function selectTeam(teamId) {
     setSelectedTeamId(teamId);
@@ -112,19 +90,6 @@ function TeamStats({ teams }) {
     setLoadingTeam(false);
   }
 
-  function sortBy(key) {
-    if (key === sortKey) {
-      setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
-    } else {
-      setSortKey(key);
-      setSortDir('desc');
-    }
-  }
-
-  const sortedRows = rows
-    ? [...rows].sort((a, b) => (sortDir === 'desc' ? b[sortKey] - a[sortKey] : a[sortKey] - b[sortKey]))
-    : null;
-
   return (
     <>
       <select className="field" aria-label="Team" value={selectedTeamId} onChange={(e) => selectTeam(e.target.value)}>
@@ -134,46 +99,8 @@ function TeamStats({ teams }) {
 
       {loadingTeam && <p className="empty-state">Loading...</p>}
 
-      {!loadingTeam && sortedRows && sortedRows.length === 0 && (
-        <p className="empty-state">This team has no roster yet. Add players under Manage Teams.</p>
-      )}
-
-      {!loadingTeam && sortedRows && sortedRows.length > 0 && (
-        <div className="stat-table-wrap">
-          <table className="stat-table">
-            <thead>
-              <tr>
-                <th className="col-player">Player</th>
-                {STAT_COLUMNS.map((col) => (
-                  <th key={col.key} className={sortKey === col.key ? 'is-sorted' : undefined} aria-sort={sortKey === col.key ? (sortDir === 'desc' ? 'descending' : 'ascending') : undefined}>
-                    <button type="button" onClick={() => sortBy(col.key)} aria-label={`Sort by ${col.full}`}>
-                      {col.label}{sortKey === col.key ? (sortDir === 'desc' ? ' \u2193' : ' \u2191') : ''}
-                    </button>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRows.map((r) => (
-                <tr key={r.number}>
-                  <td className="col-player">
-                    <span className="player-num">#{r.number}</span>
-                    {r.name && <span className="player-name" title={r.name} aria-label={r.name}>{shortName(r.name)}</span>}
-                  </td>
-                  {STAT_COLUMNS.map((col) => (
-                    <td key={col.key} style={col.key === 'points' ? { fontWeight: 700 } : undefined}>{r[col.key] || 0}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {!loadingTeam && sortedRows && sortedRows.length > 0 && (
-        <p className="stat-legend">
-          {STAT_COLUMNS.map((c) => `${c.label} ${c.full}`).join(' · ')}. Tap a column to sort.
-        </p>
+      {!loadingTeam && rows && (
+        <StatTable key={selectedTeamId} rows={rows} emptyText="This team has no roster yet. Add players under Manage Teams." />
       )}
     </>
   );
