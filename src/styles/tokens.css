@@ -1124,7 +1124,10 @@ select.field {
   color: var(--muted);
 }
 
-/* Team stats table */
+/* Team stats table. Built to fit a 360px phone without scrolling:
+   a narrow two-line player column (#41 on top, "Emiliano H." under it)
+   and seven compact number columns. Wider rosters still scroll sideways
+   with the player column pinned. */
 .stat-table-wrap {
   overflow-x: auto;
   border-radius: var(--radius);
@@ -1137,23 +1140,25 @@ select.field {
   width: 100%;
   font-family: var(--font-nav);
   font-size: 14px;
+  table-layout: fixed;
 }
 
 .stat-table th {
   background: var(--ink);
   color: #fff;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 11px;
   padding: 0;
   white-space: nowrap;
 }
 
 .stat-table th button {
+  width: 100%;
   border: none;
   background: none;
   color: inherit;
   font: inherit;
-  padding: 10px 10px;
+  padding: 10px 0;
   white-space: nowrap;
 }
 
@@ -1162,9 +1167,19 @@ select.field {
 }
 
 .stat-table td {
-  padding: 12px 10px;
+  padding: 10px 0;
   text-align: center;
   color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-table th:not(.col-player),
+.stat-table td:not(.col-player) {
+  width: 33px;
+}
+
+.stat-table tbody tr {
+  background: #fff;
 }
 
 .stat-table tbody tr:nth-child(even) {
@@ -1172,21 +1187,42 @@ select.field {
 }
 
 .stat-table .col-player {
+  width: 94px;
   text-align: left;
-  font-weight: 600;
-  white-space: nowrap;
+  padding-left: 10px;
+  padding-right: 6px;
   position: sticky;
   left: 0;
+  z-index: 1;
   background: inherit;
+  box-shadow: 1px 0 0 var(--line);
 }
 
 .stat-table thead .col-player {
   background: var(--ink);
-  padding-left: 12px;
+  font-size: 12px;
 }
 
-.stat-table tbody tr {
-  background: #fff;
+.player-num {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.player-name {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-legend {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: -4px 0 0;
 }
 
 /* ===================================================================

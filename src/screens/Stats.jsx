@@ -61,15 +61,26 @@ function GamesRegistry({ games, teams }) {
   );
 }
 
+// Short headers so all seven columns fit on a phone next to the player.
+// The legend under the table spells them out.
 const STAT_COLUMNS = [
-  { key: 'points', label: 'PTS' },
-  { key: 'td', label: 'TD' },
-  { key: 'passTD', label: 'Pass TD' },
-  { key: 'ints', label: 'INT' },
-  { key: 'sacks', label: 'Sack' },
-  { key: 'safeties', label: 'Safety' },
-  { key: 'conversions', label: 'Conv' },
+  { key: 'points', label: 'PTS', full: 'Points' },
+  { key: 'td', label: 'TD', full: 'Touchdowns' },
+  { key: 'passTD', label: 'PTD', full: 'Pass TDs thrown' },
+  { key: 'ints', label: 'INT', full: 'Interceptions' },
+  { key: 'sacks', label: 'SCK', full: 'Sacks' },
+  { key: 'safeties', label: 'SAF', full: 'Safeties' },
+  { key: 'conversions', label: 'CNV', full: 'Conversions' },
 ];
+
+// "Emiliano Santiago Hernandez" -> "Emiliano H." so the name column stays
+// narrow. The full name is still there for screen readers.
+function shortName(name) {
+  if (!name) return '';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
 
 function TeamStats({ teams }) {
   const [selectedTeamId, setSelectedTeamId] = useState('');
@@ -135,7 +146,7 @@ function TeamStats({ teams }) {
                 <th className="col-player">Player</th>
                 {STAT_COLUMNS.map((col) => (
                   <th key={col.key} className={sortKey === col.key ? 'is-sorted' : undefined} aria-sort={sortKey === col.key ? (sortDir === 'desc' ? 'descending' : 'ascending') : undefined}>
-                    <button type="button" onClick={() => sortBy(col.key)}>
+                    <button type="button" onClick={() => sortBy(col.key)} aria-label={`Sort by ${col.full}`}>
                       {col.label}{sortKey === col.key ? (sortDir === 'desc' ? ' \u2193' : ' \u2191') : ''}
                     </button>
                   </th>
@@ -145,7 +156,10 @@ function TeamStats({ teams }) {
             <tbody>
               {sortedRows.map((r) => (
                 <tr key={r.number}>
-                  <td className="col-player">#{r.number} {r.name || ''}</td>
+                  <td className="col-player">
+                    <span className="player-num">#{r.number}</span>
+                    {r.name && <span className="player-name" title={r.name} aria-label={r.name}>{shortName(r.name)}</span>}
+                  </td>
                   {STAT_COLUMNS.map((col) => (
                     <td key={col.key} style={col.key === 'points' ? { fontWeight: 700 } : undefined}>{r[col.key] || 0}</td>
                   ))}
@@ -154,6 +168,12 @@ function TeamStats({ teams }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loadingTeam && sortedRows && sortedRows.length > 0 && (
+        <p className="stat-legend">
+          {STAT_COLUMNS.map((c) => `${c.label} ${c.full}`).join(' · ')}. Tap a column to sort.
+        </p>
       )}
     </>
   );

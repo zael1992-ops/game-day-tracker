@@ -15,6 +15,7 @@ import {
 import NumberPad from '../components/NumberPad.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import Dialog from '../components/Dialog.jsx';
+import ShareDialog from '../components/ShareDialog.jsx';
 import PlayByPlay from '../components/PlayByPlay.jsx';
 import TeamPanel from '../components/TeamPanel.jsx';
 import TdChooser from '../components/TdChooser.jsx';
@@ -265,6 +266,7 @@ export default function LiveHub() {
           shareToken={game.shareToken}
           onStart={startSharing}
           onStop={stopSharing}
+          title={`${nameA} vs ${nameB}`}
           onClose={() => setShowShare(false)}
         />
       )}
@@ -322,61 +324,6 @@ function RenameTeamDialog({ initialName, onSave, onCancel }) {
         <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
         <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
       </div>
-    </Dialog>
-  );
-}
-
-function ShareDialog({ shareToken, onStart, onStop, onClose }) {
-  const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState('');
-
-  // HashRouter: the watch page lives after the #, on the same domain.
-  const link = shareToken ? `${window.location.origin}${window.location.pathname}#/watch/${shareToken}` : '';
-
-  async function run(action) {
-    setBusy(true);
-    setError('');
-    try {
-      await action();
-    } catch {
-      setError('Something went wrong. Check your connection and try again.');
-    }
-    setBusy(false);
-  }
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setError('Couldn\'t copy automatically. Press and hold the link to copy it.');
-    }
-  }
-
-  return (
-    <Dialog
-      title="Share Live Game"
-      body={
-        shareToken
-          ? 'Anyone with this link can watch the score and play by play. No account needed.'
-          : "Create a link anyone can open to follow this game live. They'll see team names, the score, and plays by jersey number, but not player names or photos. You can turn it off any time."
-      }
-    >
-      {shareToken ? (
-        <>
-          <div className="share-link">{link}</div>
-          <button type="button" className="btn btn-primary" onClick={copyLink}>{copied ? 'Copied' : 'Copy Link'}</button>
-          <button type="button" className="btn btn-danger" onClick={() => run(onStop)} disabled={busy}>Stop Sharing</button>
-        </>
-      ) : (
-        <button type="button" className="btn btn-primary" onClick={() => run(onStart)} disabled={busy}>
-          {busy ? 'Creating...' : 'Create Link'}
-        </button>
-      )}
-      {error && <p className="error-text">{error}</p>}
-      <button type="button" className="dialog-link" onClick={onClose}>Close</button>
     </Dialog>
   );
 }

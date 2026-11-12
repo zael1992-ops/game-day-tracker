@@ -4,6 +4,9 @@ import { getSharedGame } from '../lib/dataStore.js';
 import PlayByPlay from '../components/PlayByPlay.jsx';
 import GameHeader from '../components/GameHeader.jsx';
 import ScoreBox from '../components/ScoreBox.jsx';
+import StatSheet from '../components/StatSheet.jsx';
+import { tallyGame } from '../lib/statsHelpers.js';
+import { formatKickoff } from '../lib/kickoff.js';
 
 // Public, read-only spectator view. No login: everything comes through the
 // get_shared_game() function (supabase/live_sharing.sql), which only answers
@@ -84,14 +87,25 @@ export default function Watch() {
 
   const scoreA = game.plays.filter((p) => p.side === 'A').reduce((s, p) => s + p.points, 0);
   const scoreB = game.plays.filter((p) => p.side === 'B').reduce((s, p) => s + p.points, 0);
+  const kickoff = game.kickoffAt || game.createdAt;
+  const tallyA = isLive ? [] : tallyGame(game.plays.filter((p) => p.side === 'A')).sort((a, b) => b.points - a.points);
+  const tallyB = isLive ? [] : tallyGame(game.plays.filter((p) => p.side === 'B')).sort((a, b) => b.points - a.points);
 
   return (
     <div className="screen-light">
       <GameHeader />
       <main className="page">
         <ScoreBox nameA={game.teamAName} nameB={game.teamBName} scoreA={scoreA} scoreB={scoreB} logoA={game.teamALogo} logoB={game.teamBLogo}>
+          {kickoff && <span>{formatKickoff(kickoff)}</span>}
           <span className={`chip ${isLive ? 'chip-red' : 'chip-dark'}`}>{isLive ? 'LIVE' : 'FINAL'}</span>
         </ScoreBox>
+
+        {!isLive && (
+          <>
+            <h2 className="section-title">Stat Sheet</h2>
+            <StatSheet nameA={game.teamAName} nameB={game.teamBName} rowsA={tallyA} rowsB={tallyB} />
+          </>
+        )}
 
         {isLive && lastUpdated && (
           <p className="muted small" style={{ textAlign: 'center' }}>

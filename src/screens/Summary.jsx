@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import AppScreen from '../components/AppScreen.jsx';
 import ScoreBox from '../components/ScoreBox.jsx';
 import { formatKickoff } from '../lib/kickoff.js';
-import { getGame, listPlays, listTeams, listRosterSlots } from '../lib/dataStore.js';
+import { getGame, listPlays, listTeams, listRosterSlots, enableGameSharing, disableGameSharing } from '../lib/dataStore.js';
+import { HeaderAction } from '../components/GameHeader.jsx';
+import ShareDialog from '../components/ShareDialog.jsx';
 import { tallyGame } from '../lib/statsHelpers.js';
 import PlayByPlay from '../components/PlayByPlay.jsx';
 import StatSheet from '../components/StatSheet.jsx';
@@ -17,6 +19,7 @@ export default function Summary() {
   const [namesA, setNamesA] = useState({});
   const [namesB, setNamesB] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -56,9 +59,29 @@ export default function Summary() {
   const tallyB = tallyGame(plays.filter((p) => p.side === 'B')).sort((a, b) => b.points - a.points);
 
   const status = STATUS[game.status] || { label: game.status, chip: 'chip-dark' };
+  // Rejected and abandoned games can't be viewed through a link.
+  const shareable = ['active', 'pending_confirmation', 'confirmed'].includes(game.status);
+
+  async function startSharing() {
+    const token = await enableGameSharing(gameId);
+    setGame((prev) => ({ ...prev, shareToken: token }));
+  }
+
+  async function stopSharing() {
+    await disableGameSharing(gameId);
+    setGame((prev) => ({ ...prev, shareToken: null }));
+  }
 
   return (
-    <AppScreen title="Final Score" navActive="/home">
+    <AppScreen
+      title="Final Score"
+      navActive="/home"
+      right={shareable ? (
+        <HeaderAction onClick={() => setShowShare(true)} active={Boolean(game.shareToken)}>
+          {game.shareToken ? 'Shared' : 'Share'}
+        </HeaderAction>
+      ) : null}
+    >
       <ScoreBox nameA={nameA} nameB={nameB} scoreA={game.scoreA} scoreB={game.scoreB} logoA={teamA?.logo} logoB={teamB?.logo}>
         <span>{formatKickoff(game.kickoffAt)}</span>
         <span className={`chip ${status.chip}`}>{status.label}</span>
@@ -81,6 +104,17 @@ export default function Summary() {
 
       <Link to="/stats" className="btn btn-primary">View Statistics</Link>
       <Link to="/home" className="btn btn-secondary">Back to Home</Link>
+
+      {showShare && (
+        <ShareDialog
+          finished
+          shareToken={game.shareToken}
+          title={`${nameA} ${game.scoreA} - ${game.scoreB} ${nameB}`}
+          onStart={startSharing}
+          onStop={stopSharing}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </AppScreen>
   );
 }
