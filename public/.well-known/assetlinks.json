@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.gday.app",
+        "sha256_cert_fingerprints": ["D9:FB:A2:E4:3E:97:8D:A5:9B:9B:42:25:7A:0F:29:E7:0E:33:FD:1D:C2:C1:15:25:79:A4:6B:DA:B9:D0:4E:C3"]
+      }
+    }]
