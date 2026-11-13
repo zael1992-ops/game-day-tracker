@@ -18,8 +18,10 @@ import {
   rejectGame,
 } from '../lib/dataStore.js';
 import { parseRosterPaste } from '../lib/rosterImport.js';
+import { useAuth } from '../lib/AuthContext.jsx';
 
 export default function ManageTeams() {
+  const { user } = useAuth();
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTeamName, setNewTeamName] = useState('');
@@ -152,8 +154,18 @@ export default function ManageTeams() {
   }
 
   async function handleDeleteTeam(teamId, teamName) {
-    if (!window.confirm(`Delete ${teamName}? This removes its roster too and can't be undone.`)) return;
-    await deleteTeam(teamId);
+    const team = teams.find((t) => t.id === teamId);
+    const othersTeam = team?.ownerId && user?.id && team.ownerId !== user.id;
+    const warning = othersTeam
+      ? `${teamName} was created by another account. Delete it anyway? This removes its roster too and can't be undone.`
+      : `Delete ${teamName}? This removes its roster too and can't be undone.`;
+    if (!window.confirm(warning)) return;
+    try {
+      await deleteTeam(teamId);
+    } catch (err) {
+      alert(`Couldn't delete ${teamName}. ${err.message}`);
+      return;
+    }
     setTeams(teams.filter((t) => t.id !== teamId));
     if (selectedTeamId === teamId) setSelectedTeamId(null);
   }
@@ -161,7 +173,8 @@ export default function ManageTeams() {
   async function addRosterSlot(teamId) {
     if (!newNumber.trim()) return;
     try {
-      const slot = await insertRosterSlot({ teamId, number: newNumber.trim(), personName: newPlayerName.trim() || null });
+      const ownerId = teams.find((t) => t.id === teamId)?.ownerId;
+      const slot = await insertRosterSlot({ teamId, ownerId, number: newNumber.trim(), personName: newPlayerName.trim() || null });
       setSlots([...slots, slot]);
       setNewNumber('');
       setNewPlayerName('');
@@ -199,10 +212,11 @@ export default function ManageTeams() {
 
   async function handleBulkConfirm(teamId) {
     setBulkImporting(true);
+    const ownerId = teams.find((t) => t.id === teamId)?.ownerId;
     const newSlots = [];
     for (const row of bulkPreview) {
       try {
-        const slot = await insertRosterSlot({ teamId, number: row.number, personName: row.name });
+        const slot = await insertRosterSlot({ teamId, ownerId, number: row.number, personName: row.name });
         newSlots.push(slot);
       } catch (err) {
         alert(`Couldn't add #${row.number} ${row.name}: ${err.message}`);

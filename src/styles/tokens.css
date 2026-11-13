@@ -1271,6 +1271,39 @@ select.field {
   background: #ffeced;
 }
 
+/* Swipe left (or press and hold) to delete a game card */
+.swipe {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.swipe-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 96px;
+  border: none;
+  background: var(--red);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.swipe-front {
+  position: relative;
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.swipe-front a {
+  -webkit-user-drag: none;
+}
+
 /* ===================================================================
    Manage teams
    =================================================================== */

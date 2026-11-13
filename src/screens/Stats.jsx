@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import AppScreen from '../components/AppScreen.jsx';
-import { listConfirmedGames, listTeams, listRosterSlots, listPlaysForGames } from '../lib/dataStore.js';
+import { listConfirmedGames, listTeams, listRosterSlots, listPlaysForGames, deleteGame } from '../lib/dataStore.js';
+import { useAuth } from '../lib/AuthContext.jsx';
+import SwipeToDelete from '../components/SwipeToDelete.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { buildTeamTotals } from '../lib/statsHelpers.js';
 import GameCard from '../components/GameCard.jsx';
 import StatTable from '../components/StatTable.jsx';
@@ -29,27 +32,49 @@ export default function Stats() {
 
       {loading && <p className="empty-state">Loading...</p>}
 
-      {!loading && tab === 'games' && <GamesRegistry games={games} teams={teams} />}
+      {!loading && tab === 'games' && <GamesRegistry games={games} teams={teams} onDeleted={(id) => setGames((prev) => prev.filter((g) => g.id !== id))} />}
       {!loading && tab === 'team' && <TeamStats teams={teams} />}
     </AppScreen>
   );
 }
 
-function GamesRegistry({ games, teams }) {
+function GamesRegistry({ games, teams, onDeleted }) {
+  const { user, isAdmin } = useAuth();
+  const [toDelete, setToDelete] = useState(null);
+
   if (games.length === 0) return <p className="empty-state">No confirmed games yet.</p>;
+
+  const canDelete = (g) => isAdmin || (user && g.ownerId === user.id);
+  const nameFor = (g, side) => {
+    const id = side === 'A' ? g.teamAId : g.teamBId;
+    return teams.find((t) => t.id === id)?.name || (side === 'A' ? g.teamAName : g.teamBName) || (side === 'A' ? 'Team 1' : 'Team 2');
+  };
+
+  async function confirmDelete() {
+    const g = toDelete;
+    setToDelete(null);
+    try {
+      await deleteGame(g.id);
+      onDeleted(g.id);
+    } catch (err) {
+      alert(`Couldn't delete the game. ${err.message}`);
+    }
+  }
 
   return (
     <>
-      <p className="muted small">Every confirmed game. Tap one to see its stat sheet.</p>
+      <p className="muted small">
+        Every confirmed game. Tap one to see its stat sheet.
+        {games.some(canDelete) && ' Swipe left or press and hold a game to delete it.'}
+      </p>
       {games.map((g) => {
         const teamA = teams.find((t) => t.id === g.teamAId);
         const teamB = teams.find((t) => t.id === g.teamBId);
-        return (
+        const card = (
           <GameCard
-            key={g.id}
             to={`/game/${g.id}/summary`}
-            nameA={teamA?.name || g.teamAName || 'Team 1'}
-            nameB={teamB?.name || g.teamBName || 'Team 2'}
+            nameA={nameFor(g, 'A')}
+            nameB={nameFor(g, 'B')}
             logoA={teamA?.logo}
             logoB={teamB?.logo}
             scoreA={g.scoreA}
@@ -57,7 +82,22 @@ function GamesRegistry({ games, teams }) {
             caption={formatKickoff(g.kickoffAt)}
           />
         );
+        return canDelete(g) ? (
+          <SwipeToDelete key={g.id} onDelete={() => setToDelete(g)}>{card}</SwipeToDelete>
+        ) : (
+          <div key={g.id}>{card}</div>
+        );
       })}
+
+      {toDelete && (
+        <ConfirmDialog
+          title="Delete This Game?"
+          message={`${nameFor(toDelete, 'A')} ${toDelete.scoreA} - ${toDelete.scoreB} ${nameFor(toDelete, 'B')}, ${formatKickoff(toDelete.kickoffAt)}. Its plays and stats are removed from every total, for good.`}
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setToDelete(null)}
+        />
+      )}
     </>
   );
 }

@@ -10,7 +10,7 @@
 import { supabase } from './supabaseClient.js';
 
 function fromTeamRow(r) {
-  return { id: r.id, name: r.name, color: r.color, logo: r.logo };
+  return { id: r.id, name: r.name, color: r.color, logo: r.logo, ownerId: r.owner_id };
 }
 
 function fromGameRow(r) {
@@ -24,6 +24,7 @@ function fromGameRow(r) {
     scoreB: r.score_b,
     status: r.status,
     shareToken: r.share_token,
+    ownerId: r.owner_id,
     createdAt: r.created_at,
     kickoffAt: r.kickoff_at ?? r.created_at,
   };
@@ -77,9 +78,18 @@ export async function updateTeamLogo(teamId, logo) {
   if (error) throw error;
 }
 
+// Only the account that created a team can delete it (database rule).
+// When someone else's team is targeted, the database deletes nothing and
+// reports no error, so check that a row actually went away.
+// The database only allows the team's creator or a GM (admin) to
+// delete it. When neither applies it deletes nothing and reports no
+// error, so check that a row actually went away.
 export async function deleteTeam(teamId) {
-  const { error } = await supabase.from('teams').delete().eq('id', teamId);
+  const { data, error } = await supabase.from('teams').delete().eq('id', teamId).select('id');
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error('Only the account that created this team, or a GM, can delete it.');
+  }
 }
 
 // --- People + roster slots -------------------------------------------
@@ -89,16 +99,20 @@ export async function listRosterSlots(teamId) {
   return data.map((r) => ({ ...fromSlotRow(r), personName: r.people?.name ?? null, personPhoto: r.people?.photo ?? null }));
 }
 
-export async function insertRosterSlot({ teamId, number, personName }) {
+// ownerId: the team's owner. New players are saved under the team's owner
+// (not whoever is adding them), so when a GM edits someone else's roster
+// that team's owner still sees every player.
+export async function insertRosterSlot({ teamId, number, personName, ownerId }) {
+  const owner = ownerId ? { owner_id: ownerId } : {};
   let personId = null;
   if (personName) {
-    const { data: person, error: personError } = await supabase.from('people').insert({ name: personName }).select().single();
+    const { data: person, error: personError } = await supabase.from('people').insert({ name: personName, ...owner }).select().single();
     if (personError) throw personError;
     personId = person.id;
   }
   const { data, error } = await supabase
     .from('roster_slots')
-    .insert({ team_id: teamId, number, person_id: personId })
+    .insert({ team_id: teamId, number, person_id: personId, ...owner })
     .select('*, people(name, photo)')
     .single();
   if (error) throw error;
@@ -224,6 +238,16 @@ export async function listMyPendingGames() {
     .order('kickoff_at', { ascending: false });
   if (error) throw error;
   return data.map(fromGameRow);
+}
+
+// Deletes a game and all of its plays for good. Allowed for the game's
+// creator and for GMs; anyone else gets an error instead of a silent no-op.
+export async function deleteGame(gameId) {
+  const { data, error } = await supabase.from('games').delete().eq('id', gameId).select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error('Only the account that created this game, or a GM, can delete it.');
+  }
 }
 
 export async function abandonGame(gameId) {

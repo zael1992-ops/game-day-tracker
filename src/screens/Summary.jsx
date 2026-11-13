@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import AppScreen from '../components/AppScreen.jsx';
 import ScoreBox from '../components/ScoreBox.jsx';
 import { formatKickoff } from '../lib/kickoff.js';
-import { getGame, listPlays, listTeams, listRosterSlots, enableGameSharing, disableGameSharing } from '../lib/dataStore.js';
+import { getGame, listPlays, listTeams, listRosterSlots, enableGameSharing, disableGameSharing, deleteGame } from '../lib/dataStore.js';
 import { HeaderAction } from '../components/GameHeader.jsx';
 import ShareDialog from '../components/ShareDialog.jsx';
 import { tallyGame } from '../lib/statsHelpers.js';
@@ -20,6 +22,9 @@ export default function Summary() {
   const [namesB, setNamesB] = useState({});
   const [loading, setLoading] = useState(true);
   const [showShare, setShowShare] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -61,6 +66,18 @@ export default function Summary() {
   const status = STATUS[game.status] || { label: game.status, chip: 'chip-dark' };
   // Rejected and abandoned games can't be viewed through a link.
   const shareable = ['active', 'pending_confirmation', 'confirmed'].includes(game.status);
+
+  const canDelete = isAdmin || (user && game.ownerId === user.id);
+
+  async function handleDelete() {
+    setShowDelete(false);
+    try {
+      await deleteGame(gameId);
+      navigate('/stats', { replace: true });
+    } catch (err) {
+      alert(`Couldn't delete the game. ${err.message}`);
+    }
+  }
 
   async function startSharing() {
     const token = await enableGameSharing(gameId);
@@ -104,6 +121,22 @@ export default function Summary() {
 
       <Link to="/stats" className="btn btn-primary">View Statistics</Link>
       <Link to="/home" className="btn btn-secondary">Back to Home</Link>
+
+      {canDelete && (
+        <button type="button" className="text-button text-button-danger" style={{ alignSelf: 'center', marginTop: 8 }} onClick={() => setShowDelete(true)}>
+          Delete game
+        </button>
+      )}
+
+      {showDelete && (
+        <ConfirmDialog
+          title="Delete This Game?"
+          message="Its plays and stats are removed from every total, for good."
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDelete(false)}
+        />
+      )}
 
       {showShare && (
         <ShareDialog
